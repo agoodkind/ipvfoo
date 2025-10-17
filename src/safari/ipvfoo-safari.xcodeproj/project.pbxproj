@@ -7,46 +7,46 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B282581F2EA2A84D002AEC06 /* ipvfoo-safari Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B282581E2EA2A84D002AEC06 /* ipvfoo-safari Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		B28258292EA2A84D002AEC06 /* ipvfoo-safari Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B28258282EA2A84D002AEC06 /* ipvfoo-safari Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B2C2F7EF2EA2ACB90051EEFB /* ipvfoo-safari Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B2C2F7EE2EA2ACB90051EEFB /* ipvfoo-safari Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B2C2F7F92EA2ACB90051EEFB /* ipvfoo-safari Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B2C2F7F82EA2ACB90051EEFB /* ipvfoo-safari Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		B28258202EA2A84D002AEC06 /* PBXContainerItemProxy */ = {
+		B2C2F7F02EA2ACB90051EEFB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = B28257E52EA2A84B002AEC06 /* Project object */;
+			containerPortal = B2C2F7B52EA2ACB70051EEFB /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = B282581D2EA2A84D002AEC06;
+			remoteGlobalIDString = B2C2F7ED2EA2ACB90051EEFB;
 			remoteInfo = "ipvfoo-safari Extension (iOS)";
 		};
-		B282582A2EA2A84D002AEC06 /* PBXContainerItemProxy */ = {
+		B2C2F7FA2EA2ACB90051EEFB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = B28257E52EA2A84B002AEC06 /* Project object */;
+			containerPortal = B2C2F7B52EA2ACB70051EEFB /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = B28258272EA2A84D002AEC06;
+			remoteGlobalIDString = B2C2F7F72EA2ACB90051EEFB;
 			remoteInfo = "ipvfoo-safari Extension (macOS)";
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		B28258512EA2A84D002AEC06 /* Embed Foundation Extensions */ = {
+		B2C2F8212EA2ACB90051EEFB /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				B282581F2EA2A84D002AEC06 /* ipvfoo-safari Extension.appex in Embed Foundation Extensions */,
+				B2C2F7EF2EA2ACB90051EEFB /* ipvfoo-safari Extension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B282585B2EA2A84D002AEC06 /* Embed Foundation Extensions */ = {
+		B2C2F82B2EA2ACB90051EEFB /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				B28258292EA2A84D002AEC06 /* ipvfoo-safari Extension.appex in Embed Foundation Extensions */,
+				B2C2F7F92EA2ACB90051EEFB /* ipvfoo-safari Extension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -54,14 +54,14 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		B28258012EA2A84D002AEC06 /* ipvfoo-safari.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ipvfoo-safari.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		B28258132EA2A84D002AEC06 /* ipvfoo-safari.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ipvfoo-safari.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		B282581E2EA2A84D002AEC06 /* ipvfoo-safari Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "ipvfoo-safari Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
-		B28258282EA2A84D002AEC06 /* ipvfoo-safari Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "ipvfoo-safari Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B2C2F7D12EA2ACB90051EEFB /* ipvfoo-safari.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ipvfoo-safari.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B2C2F7E32EA2ACB90051EEFB /* ipvfoo-safari.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ipvfoo-safari.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B2C2F7EE2EA2ACB90051EEFB /* ipvfoo-safari Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "ipvfoo-safari Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B2C2F7F82EA2ACB90051EEFB /* ipvfoo-safari Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "ipvfoo-safari Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		B282584C2EA2A84D002AEC06 /* Exceptions for "Shared (App)" folder in "ipvfoo-safari (iOS)" target */ = {
+		B2C2F81C2EA2ACB90051EEFB /* Exceptions for "Shared (App)" folder in "ipvfoo-safari (iOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				"/Localized: Resources/Main.html",
@@ -71,23 +71,23 @@
 				Resources/Style.css,
 				ViewController.swift,
 			);
-			target = B28258002EA2A84D002AEC06 /* ipvfoo-safari (iOS) */;
+			target = B2C2F7D02EA2ACB90051EEFB /* ipvfoo-safari (iOS) */;
 		};
-		B28258502EA2A84D002AEC06 /* Exceptions for "iOS (Extension)" folder in "ipvfoo-safari Extension (iOS)" target */ = {
+		B2C2F8202EA2ACB90051EEFB /* Exceptions for "iOS (Extension)" folder in "ipvfoo-safari Extension (iOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = B282581D2EA2A84D002AEC06 /* ipvfoo-safari Extension (iOS) */;
+			target = B2C2F7ED2EA2ACB90051EEFB /* ipvfoo-safari Extension (iOS) */;
 		};
-		B28258552EA2A84D002AEC06 /* Exceptions for "iOS (App)" folder in "ipvfoo-safari (iOS)" target */ = {
+		B2C2F8252EA2ACB90051EEFB /* Exceptions for "iOS (App)" folder in "ipvfoo-safari (iOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = B28258002EA2A84D002AEC06 /* ipvfoo-safari (iOS) */;
+			target = B2C2F7D02EA2ACB90051EEFB /* ipvfoo-safari (iOS) */;
 		};
-		B28258562EA2A84D002AEC06 /* Exceptions for "Shared (App)" folder in "ipvfoo-safari (macOS)" target */ = {
+		B2C2F8262EA2ACB90051EEFB /* Exceptions for "Shared (App)" folder in "ipvfoo-safari (macOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				"/Localized: Resources/Main.html",
@@ -97,62 +97,100 @@
 				Resources/Style.css,
 				ViewController.swift,
 			);
-			target = B28258122EA2A84D002AEC06 /* ipvfoo-safari (macOS) */;
+			target = B2C2F7E22EA2ACB90051EEFB /* ipvfoo-safari (macOS) */;
 		};
-		B282585A2EA2A84D002AEC06 /* Exceptions for "macOS (Extension)" folder in "ipvfoo-safari Extension (macOS)" target */ = {
+		B2C2F82A2EA2ACB90051EEFB /* Exceptions for "macOS (Extension)" folder in "ipvfoo-safari Extension (macOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = B28258272EA2A84D002AEC06 /* ipvfoo-safari Extension (macOS) */;
+			target = B2C2F7F72EA2ACB90051EEFB /* ipvfoo-safari Extension (macOS) */;
 		};
-		B282585F2EA2A84D002AEC06 /* Exceptions for "Shared (Extension)" folder in "ipvfoo-safari Extension (iOS)" target */ = {
+		B2C2F82F2EA2ACB90051EEFB /* Exceptions for "Shared (Extension)" folder in "ipvfoo-safari Extension (iOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Resources/_locales,
+				Resources/1x1_808080.png,
 				Resources/background.js,
+				Resources/cached_arrow.png,
+				Resources/common.js,
 				Resources/content.js,
+				Resources/detectdarkmode.html,
+				Resources/detectdarkmode.js,
+				Resources/gray_lock.png,
+				Resources/gray_schrodingers_lock.png,
+				Resources/gray_unlock.png,
+				Resources/icon16_transparent.png,
+				Resources/icon16.png,
+				Resources/icon128.png,
 				Resources/images,
+				Resources/iputil.js,
 				Resources/manifest.json,
+				Resources/options.html,
+				Resources/options.js,
 				Resources/popup.css,
 				Resources/popup.html,
 				Resources/popup.js,
+				Resources/serviceworker.png,
+				Resources/snip.png,
+				Resources/sprites16.png,
+				Resources/sprites32.png,
+				Resources/websocket.png,
 				SafariWebExtensionHandler.swift,
 			);
-			target = B282581D2EA2A84D002AEC06 /* ipvfoo-safari Extension (iOS) */;
+			target = B2C2F7ED2EA2ACB90051EEFB /* ipvfoo-safari Extension (iOS) */;
 		};
-		B28258602EA2A84D002AEC06 /* Exceptions for "Shared (Extension)" folder in "ipvfoo-safari Extension (macOS)" target */ = {
+		B2C2F8302EA2ACB90051EEFB /* Exceptions for "Shared (Extension)" folder in "ipvfoo-safari Extension (macOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Resources/_locales,
+				Resources/1x1_808080.png,
 				Resources/background.js,
+				Resources/cached_arrow.png,
+				Resources/common.js,
 				Resources/content.js,
+				Resources/detectdarkmode.html,
+				Resources/detectdarkmode.js,
+				Resources/gray_lock.png,
+				Resources/gray_schrodingers_lock.png,
+				Resources/gray_unlock.png,
+				Resources/icon16_transparent.png,
+				Resources/icon16.png,
+				Resources/icon128.png,
 				Resources/images,
+				Resources/iputil.js,
 				Resources/manifest.json,
+				Resources/options.html,
+				Resources/options.js,
 				Resources/popup.css,
 				Resources/popup.html,
 				Resources/popup.js,
+				Resources/serviceworker.png,
+				Resources/snip.png,
+				Resources/sprites16.png,
+				Resources/sprites32.png,
+				Resources/websocket.png,
 				SafariWebExtensionHandler.swift,
 			);
-			target = B28258272EA2A84D002AEC06 /* ipvfoo-safari Extension (macOS) */;
+			target = B2C2F7F72EA2ACB90051EEFB /* ipvfoo-safari Extension (macOS) */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		B28257E92EA2A84B002AEC06 /* Shared (App) */ = {
+		B2C2F7B92EA2ACB70051EEFB /* Shared (App) */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				B282584C2EA2A84D002AEC06 /* Exceptions for "Shared (App)" folder in "ipvfoo-safari (iOS)" target */,
-				B28258562EA2A84D002AEC06 /* Exceptions for "Shared (App)" folder in "ipvfoo-safari (macOS)" target */,
+				B2C2F81C2EA2ACB90051EEFB /* Exceptions for "Shared (App)" folder in "ipvfoo-safari (iOS)" target */,
+				B2C2F8262EA2ACB90051EEFB /* Exceptions for "Shared (App)" folder in "ipvfoo-safari (macOS)" target */,
 			);
 			path = "Shared (App)";
 			sourceTree = "<group>";
 		};
-		B28257F22EA2A84D002AEC06 /* Shared (Extension) */ = {
+		B2C2F7C22EA2ACB90051EEFB /* Shared (Extension) */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				B282585F2EA2A84D002AEC06 /* Exceptions for "Shared (Extension)" folder in "ipvfoo-safari Extension (iOS)" target */,
-				B28258602EA2A84D002AEC06 /* Exceptions for "Shared (Extension)" folder in "ipvfoo-safari Extension (macOS)" target */,
+				B2C2F82F2EA2ACB90051EEFB /* Exceptions for "Shared (Extension)" folder in "ipvfoo-safari Extension (iOS)" target */,
+				B2C2F8302EA2ACB90051EEFB /* Exceptions for "Shared (Extension)" folder in "ipvfoo-safari Extension (macOS)" target */,
 			);
 			explicitFolders = (
 				Resources/_locales,
@@ -161,31 +199,31 @@
 			path = "Shared (Extension)";
 			sourceTree = "<group>";
 		};
-		B28258032EA2A84D002AEC06 /* iOS (App) */ = {
+		B2C2F7D32EA2ACB90051EEFB /* iOS (App) */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				B28258552EA2A84D002AEC06 /* Exceptions for "iOS (App)" folder in "ipvfoo-safari (iOS)" target */,
+				B2C2F8252EA2ACB90051EEFB /* Exceptions for "iOS (App)" folder in "ipvfoo-safari (iOS)" target */,
 			);
 			path = "iOS (App)";
 			sourceTree = "<group>";
 		};
-		B28258142EA2A84D002AEC06 /* macOS (App) */ = {
+		B2C2F7E42EA2ACB90051EEFB /* macOS (App) */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "macOS (App)";
 			sourceTree = "<group>";
 		};
-		B28258222EA2A84D002AEC06 /* iOS (Extension) */ = {
+		B2C2F7F22EA2ACB90051EEFB /* iOS (Extension) */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				B28258502EA2A84D002AEC06 /* Exceptions for "iOS (Extension)" folder in "ipvfoo-safari Extension (iOS)" target */,
+				B2C2F8202EA2ACB90051EEFB /* Exceptions for "iOS (Extension)" folder in "ipvfoo-safari Extension (iOS)" target */,
 			);
 			path = "iOS (Extension)";
 			sourceTree = "<group>";
 		};
-		B282582C2EA2A84D002AEC06 /* macOS (Extension) */ = {
+		B2C2F7FC2EA2ACB90051EEFB /* macOS (Extension) */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				B282585A2EA2A84D002AEC06 /* Exceptions for "macOS (Extension)" folder in "ipvfoo-safari Extension (macOS)" target */,
+				B2C2F82A2EA2ACB90051EEFB /* Exceptions for "macOS (Extension)" folder in "ipvfoo-safari Extension (macOS)" target */,
 			);
 			path = "macOS (Extension)";
 			sourceTree = "<group>";
@@ -193,28 +231,28 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		B28257FE2EA2A84D002AEC06 /* Frameworks */ = {
+		B2C2F7CE2EA2ACB90051EEFB /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B28258102EA2A84D002AEC06 /* Frameworks */ = {
+		B2C2F7E02EA2ACB90051EEFB /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B282581B2EA2A84D002AEC06 /* Frameworks */ = {
+		B2C2F7EB2EA2ACB90051EEFB /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B28258252EA2A84D002AEC06 /* Frameworks */ = {
+		B2C2F7F52EA2ACB90051EEFB /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -224,26 +262,26 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		B28257E42EA2A84B002AEC06 = {
+		B2C2F7B42EA2ACB70051EEFB = {
 			isa = PBXGroup;
 			children = (
-				B28257E92EA2A84B002AEC06 /* Shared (App) */,
-				B28257F22EA2A84D002AEC06 /* Shared (Extension) */,
-				B28258032EA2A84D002AEC06 /* iOS (App) */,
-				B28258142EA2A84D002AEC06 /* macOS (App) */,
-				B28258222EA2A84D002AEC06 /* iOS (Extension) */,
-				B282582C2EA2A84D002AEC06 /* macOS (Extension) */,
-				B28258022EA2A84D002AEC06 /* Products */,
+				B2C2F7B92EA2ACB70051EEFB /* Shared (App) */,
+				B2C2F7C22EA2ACB90051EEFB /* Shared (Extension) */,
+				B2C2F7D32EA2ACB90051EEFB /* iOS (App) */,
+				B2C2F7E42EA2ACB90051EEFB /* macOS (App) */,
+				B2C2F7F22EA2ACB90051EEFB /* iOS (Extension) */,
+				B2C2F7FC2EA2ACB90051EEFB /* macOS (Extension) */,
+				B2C2F7D22EA2ACB90051EEFB /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		B28258022EA2A84D002AEC06 /* Products */ = {
+		B2C2F7D22EA2ACB90051EEFB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				B28258012EA2A84D002AEC06 /* ipvfoo-safari.app */,
-				B28258132EA2A84D002AEC06 /* ipvfoo-safari.app */,
-				B282581E2EA2A84D002AEC06 /* ipvfoo-safari Extension.appex */,
-				B28258282EA2A84D002AEC06 /* ipvfoo-safari Extension.appex */,
+				B2C2F7D12EA2ACB90051EEFB /* ipvfoo-safari.app */,
+				B2C2F7E32EA2ACB90051EEFB /* ipvfoo-safari.app */,
+				B2C2F7EE2EA2ACB90051EEFB /* ipvfoo-safari Extension.appex */,
+				B2C2F7F82EA2ACB90051EEFB /* ipvfoo-safari Extension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -251,167 +289,167 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		B28258002EA2A84D002AEC06 /* ipvfoo-safari (iOS) */ = {
+		B2C2F7D02EA2ACB90051EEFB /* ipvfoo-safari (iOS) */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B28258522EA2A84D002AEC06 /* Build configuration list for PBXNativeTarget "ipvfoo-safari (iOS)" */;
+			buildConfigurationList = B2C2F8222EA2ACB90051EEFB /* Build configuration list for PBXNativeTarget "ipvfoo-safari (iOS)" */;
 			buildPhases = (
-				B28257FD2EA2A84D002AEC06 /* Sources */,
-				B28257FE2EA2A84D002AEC06 /* Frameworks */,
-				B28257FF2EA2A84D002AEC06 /* Resources */,
-				B28258512EA2A84D002AEC06 /* Embed Foundation Extensions */,
+				B2C2F7CD2EA2ACB90051EEFB /* Sources */,
+				B2C2F7CE2EA2ACB90051EEFB /* Frameworks */,
+				B2C2F7CF2EA2ACB90051EEFB /* Resources */,
+				B2C2F8212EA2ACB90051EEFB /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				B28258212EA2A84D002AEC06 /* PBXTargetDependency */,
+				B2C2F7F12EA2ACB90051EEFB /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				B28258032EA2A84D002AEC06 /* iOS (App) */,
+				B2C2F7D32EA2ACB90051EEFB /* iOS (App) */,
 			);
 			name = "ipvfoo-safari (iOS)";
 			packageProductDependencies = (
 			);
 			productName = "ipvfoo-safari (iOS)";
-			productReference = B28258012EA2A84D002AEC06 /* ipvfoo-safari.app */;
+			productReference = B2C2F7D12EA2ACB90051EEFB /* ipvfoo-safari.app */;
 			productType = "com.apple.product-type.application";
 		};
-		B28258122EA2A84D002AEC06 /* ipvfoo-safari (macOS) */ = {
+		B2C2F7E22EA2ACB90051EEFB /* ipvfoo-safari (macOS) */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B282585C2EA2A84D002AEC06 /* Build configuration list for PBXNativeTarget "ipvfoo-safari (macOS)" */;
+			buildConfigurationList = B2C2F82C2EA2ACB90051EEFB /* Build configuration list for PBXNativeTarget "ipvfoo-safari (macOS)" */;
 			buildPhases = (
-				B282580F2EA2A84D002AEC06 /* Sources */,
-				B28258102EA2A84D002AEC06 /* Frameworks */,
-				B28258112EA2A84D002AEC06 /* Resources */,
-				B282585B2EA2A84D002AEC06 /* Embed Foundation Extensions */,
+				B2C2F7DF2EA2ACB90051EEFB /* Sources */,
+				B2C2F7E02EA2ACB90051EEFB /* Frameworks */,
+				B2C2F7E12EA2ACB90051EEFB /* Resources */,
+				B2C2F82B2EA2ACB90051EEFB /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				B282582B2EA2A84D002AEC06 /* PBXTargetDependency */,
+				B2C2F7FB2EA2ACB90051EEFB /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				B28258142EA2A84D002AEC06 /* macOS (App) */,
+				B2C2F7E42EA2ACB90051EEFB /* macOS (App) */,
 			);
 			name = "ipvfoo-safari (macOS)";
 			packageProductDependencies = (
 			);
 			productName = "ipvfoo-safari (macOS)";
-			productReference = B28258132EA2A84D002AEC06 /* ipvfoo-safari.app */;
+			productReference = B2C2F7E32EA2ACB90051EEFB /* ipvfoo-safari.app */;
 			productType = "com.apple.product-type.application";
 		};
-		B282581D2EA2A84D002AEC06 /* ipvfoo-safari Extension (iOS) */ = {
+		B2C2F7ED2EA2ACB90051EEFB /* ipvfoo-safari Extension (iOS) */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B282584D2EA2A84D002AEC06 /* Build configuration list for PBXNativeTarget "ipvfoo-safari Extension (iOS)" */;
+			buildConfigurationList = B2C2F81D2EA2ACB90051EEFB /* Build configuration list for PBXNativeTarget "ipvfoo-safari Extension (iOS)" */;
 			buildPhases = (
-				B282581A2EA2A84D002AEC06 /* Sources */,
-				B282581B2EA2A84D002AEC06 /* Frameworks */,
-				B282581C2EA2A84D002AEC06 /* Resources */,
+				B2C2F7EA2EA2ACB90051EEFB /* Sources */,
+				B2C2F7EB2EA2ACB90051EEFB /* Frameworks */,
+				B2C2F7EC2EA2ACB90051EEFB /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				B28258222EA2A84D002AEC06 /* iOS (Extension) */,
+				B2C2F7F22EA2ACB90051EEFB /* iOS (Extension) */,
 			);
 			name = "ipvfoo-safari Extension (iOS)";
 			packageProductDependencies = (
 			);
 			productName = "ipvfoo-safari Extension (iOS)";
-			productReference = B282581E2EA2A84D002AEC06 /* ipvfoo-safari Extension.appex */;
+			productReference = B2C2F7EE2EA2ACB90051EEFB /* ipvfoo-safari Extension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		B28258272EA2A84D002AEC06 /* ipvfoo-safari Extension (macOS) */ = {
+		B2C2F7F72EA2ACB90051EEFB /* ipvfoo-safari Extension (macOS) */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B28258572EA2A84D002AEC06 /* Build configuration list for PBXNativeTarget "ipvfoo-safari Extension (macOS)" */;
+			buildConfigurationList = B2C2F8272EA2ACB90051EEFB /* Build configuration list for PBXNativeTarget "ipvfoo-safari Extension (macOS)" */;
 			buildPhases = (
-				B28258242EA2A84D002AEC06 /* Sources */,
-				B28258252EA2A84D002AEC06 /* Frameworks */,
-				B28258262EA2A84D002AEC06 /* Resources */,
+				B2C2F7F42EA2ACB90051EEFB /* Sources */,
+				B2C2F7F52EA2ACB90051EEFB /* Frameworks */,
+				B2C2F7F62EA2ACB90051EEFB /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				B282582C2EA2A84D002AEC06 /* macOS (Extension) */,
+				B2C2F7FC2EA2ACB90051EEFB /* macOS (Extension) */,
 			);
 			name = "ipvfoo-safari Extension (macOS)";
 			packageProductDependencies = (
 			);
 			productName = "ipvfoo-safari Extension (macOS)";
-			productReference = B28258282EA2A84D002AEC06 /* ipvfoo-safari Extension.appex */;
+			productReference = B2C2F7F82EA2ACB90051EEFB /* ipvfoo-safari Extension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		B28257E52EA2A84B002AEC06 /* Project object */ = {
+		B2C2F7B52EA2ACB70051EEFB /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2600;
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
-					B28258002EA2A84D002AEC06 = {
+					B2C2F7D02EA2ACB90051EEFB = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
-					B28258122EA2A84D002AEC06 = {
+					B2C2F7E22EA2ACB90051EEFB = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
-					B282581D2EA2A84D002AEC06 = {
+					B2C2F7ED2EA2ACB90051EEFB = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
-					B28258272EA2A84D002AEC06 = {
+					B2C2F7F72EA2ACB90051EEFB = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
 				};
 			};
-			buildConfigurationList = B28257E82EA2A84B002AEC06 /* Build configuration list for PBXProject "ipvfoo-safari" */;
+			buildConfigurationList = B2C2F7B82EA2ACB70051EEFB /* Build configuration list for PBXProject "ipvfoo-safari" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = B28257E42EA2A84B002AEC06;
+			mainGroup = B2C2F7B42EA2ACB70051EEFB;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = B28258022EA2A84D002AEC06 /* Products */;
+			productRefGroup = B2C2F7D22EA2ACB90051EEFB /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				B28258002EA2A84D002AEC06 /* ipvfoo-safari (iOS) */,
-				B28258122EA2A84D002AEC06 /* ipvfoo-safari (macOS) */,
-				B282581D2EA2A84D002AEC06 /* ipvfoo-safari Extension (iOS) */,
-				B28258272EA2A84D002AEC06 /* ipvfoo-safari Extension (macOS) */,
+				B2C2F7D02EA2ACB90051EEFB /* ipvfoo-safari (iOS) */,
+				B2C2F7E22EA2ACB90051EEFB /* ipvfoo-safari (macOS) */,
+				B2C2F7ED2EA2ACB90051EEFB /* ipvfoo-safari Extension (iOS) */,
+				B2C2F7F72EA2ACB90051EEFB /* ipvfoo-safari Extension (macOS) */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		B28257FF2EA2A84D002AEC06 /* Resources */ = {
+		B2C2F7CF2EA2ACB90051EEFB /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B28258112EA2A84D002AEC06 /* Resources */ = {
+		B2C2F7E12EA2ACB90051EEFB /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B282581C2EA2A84D002AEC06 /* Resources */ = {
+		B2C2F7EC2EA2ACB90051EEFB /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B28258262EA2A84D002AEC06 /* Resources */ = {
+		B2C2F7F62EA2ACB90051EEFB /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -421,28 +459,28 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		B28257FD2EA2A84D002AEC06 /* Sources */ = {
+		B2C2F7CD2EA2ACB90051EEFB /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B282580F2EA2A84D002AEC06 /* Sources */ = {
+		B2C2F7DF2EA2ACB90051EEFB /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B282581A2EA2A84D002AEC06 /* Sources */ = {
+		B2C2F7EA2EA2ACB90051EEFB /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B28258242EA2A84D002AEC06 /* Sources */ = {
+		B2C2F7F42EA2ACB90051EEFB /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -452,20 +490,20 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		B28258212EA2A84D002AEC06 /* PBXTargetDependency */ = {
+		B2C2F7F12EA2ACB90051EEFB /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = B282581D2EA2A84D002AEC06 /* ipvfoo-safari Extension (iOS) */;
-			targetProxy = B28258202EA2A84D002AEC06 /* PBXContainerItemProxy */;
+			target = B2C2F7ED2EA2ACB90051EEFB /* ipvfoo-safari Extension (iOS) */;
+			targetProxy = B2C2F7F02EA2ACB90051EEFB /* PBXContainerItemProxy */;
 		};
-		B282582B2EA2A84D002AEC06 /* PBXTargetDependency */ = {
+		B2C2F7FB2EA2ACB90051EEFB /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = B28258272EA2A84D002AEC06 /* ipvfoo-safari Extension (macOS) */;
-			targetProxy = B282582A2EA2A84D002AEC06 /* PBXContainerItemProxy */;
+			target = B2C2F7F72EA2ACB90051EEFB /* ipvfoo-safari Extension (macOS) */;
+			targetProxy = B2C2F7FA2EA2ACB90051EEFB /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		B282584E2EA2A84D002AEC06 /* Debug */ = {
+		B2C2F81E2EA2ACB90051EEFB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -499,7 +537,7 @@
 			};
 			name = Debug;
 		};
-		B282584F2EA2A84D002AEC06 /* Release */ = {
+		B2C2F81F2EA2ACB90051EEFB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -534,7 +572,7 @@
 			};
 			name = Release;
 		};
-		B28258532EA2A84D002AEC06 /* Debug */ = {
+		B2C2F8232EA2ACB90051EEFB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -575,7 +613,7 @@
 			};
 			name = Debug;
 		};
-		B28258542EA2A84D002AEC06 /* Release */ = {
+		B2C2F8242EA2ACB90051EEFB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -617,7 +655,7 @@
 			};
 			name = Release;
 		};
-		B28258582EA2A84D002AEC06 /* Debug */ = {
+		B2C2F8282EA2ACB90051EEFB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -653,7 +691,7 @@
 			};
 			name = Debug;
 		};
-		B28258592EA2A84D002AEC06 /* Release */ = {
+		B2C2F8292EA2ACB90051EEFB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -689,7 +727,7 @@
 			};
 			name = Release;
 		};
-		B282585D2EA2A84D002AEC06 /* Debug */ = {
+		B2C2F82D2EA2ACB90051EEFB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -730,7 +768,7 @@
 			};
 			name = Debug;
 		};
-		B282585E2EA2A84D002AEC06 /* Release */ = {
+		B2C2F82E2EA2ACB90051EEFB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -771,7 +809,7 @@
 			};
 			name = Release;
 		};
-		B28258612EA2A84D002AEC06 /* Debug */ = {
+		B2C2F8312EA2ACB90051EEFB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -833,7 +871,7 @@
 			};
 			name = Debug;
 		};
-		B28258622EA2A84D002AEC06 /* Release */ = {
+		B2C2F8322EA2ACB90051EEFB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -890,52 +928,52 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		B28257E82EA2A84B002AEC06 /* Build configuration list for PBXProject "ipvfoo-safari" */ = {
+		B2C2F7B82EA2ACB70051EEFB /* Build configuration list for PBXProject "ipvfoo-safari" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B28258612EA2A84D002AEC06 /* Debug */,
-				B28258622EA2A84D002AEC06 /* Release */,
+				B2C2F8312EA2ACB90051EEFB /* Debug */,
+				B2C2F8322EA2ACB90051EEFB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B282584D2EA2A84D002AEC06 /* Build configuration list for PBXNativeTarget "ipvfoo-safari Extension (iOS)" */ = {
+		B2C2F81D2EA2ACB90051EEFB /* Build configuration list for PBXNativeTarget "ipvfoo-safari Extension (iOS)" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B282584E2EA2A84D002AEC06 /* Debug */,
-				B282584F2EA2A84D002AEC06 /* Release */,
+				B2C2F81E2EA2ACB90051EEFB /* Debug */,
+				B2C2F81F2EA2ACB90051EEFB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B28258522EA2A84D002AEC06 /* Build configuration list for PBXNativeTarget "ipvfoo-safari (iOS)" */ = {
+		B2C2F8222EA2ACB90051EEFB /* Build configuration list for PBXNativeTarget "ipvfoo-safari (iOS)" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B28258532EA2A84D002AEC06 /* Debug */,
-				B28258542EA2A84D002AEC06 /* Release */,
+				B2C2F8232EA2ACB90051EEFB /* Debug */,
+				B2C2F8242EA2ACB90051EEFB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B28258572EA2A84D002AEC06 /* Build configuration list for PBXNativeTarget "ipvfoo-safari Extension (macOS)" */ = {
+		B2C2F8272EA2ACB90051EEFB /* Build configuration list for PBXNativeTarget "ipvfoo-safari Extension (macOS)" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B28258582EA2A84D002AEC06 /* Debug */,
-				B28258592EA2A84D002AEC06 /* Release */,
+				B2C2F8282EA2ACB90051EEFB /* Debug */,
+				B2C2F8292EA2ACB90051EEFB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B282585C2EA2A84D002AEC06 /* Build configuration list for PBXNativeTarget "ipvfoo-safari (macOS)" */ = {
+		B2C2F82C2EA2ACB90051EEFB /* Build configuration list for PBXNativeTarget "ipvfoo-safari (macOS)" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B282585D2EA2A84D002AEC06 /* Debug */,
-				B282585E2EA2A84D002AEC06 /* Release */,
+				B2C2F82D2EA2ACB90051EEFB /* Debug */,
+				B2C2F82E2EA2ACB90051EEFB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = B28257E52EA2A84B002AEC06 /* Project object */;
+	rootObject = B2C2F7B52EA2ACB70051EEFB /* Project object */;
 }

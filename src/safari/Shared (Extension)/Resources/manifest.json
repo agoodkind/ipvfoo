@@ -1,33 +1,37 @@
 {
-    "manifest_version": 3,
-    "default_locale": "en",
-
-    "name": "__MSG_extension_name__",
-    "description": "__MSG_extension_description__",
-    "version": "1.0",
-
-    "icons": {
-        "48": "images/icon-48.png",
-        "96": "images/icon-96.png",
-        "128": "images/icon-128.png",
-        "256": "images/icon-256.png",
-        "512": "images/icon-512.png"
-    },
-
-    "background": {
-        "scripts": [ "background.js" ],
-        "type": "module"
-    },
-
-    "content_scripts": [{
-        "js": [ "content.js" ],
-        "matches": [ "*://example.com/*" ]
-    }],
-
-    "action": {
-        "default_popup": "popup.html",
-        "default_icon": "images/toolbar-icon.svg"
-    },
-
-    "permissions": [ ]
+  "name": "IPvFoo",
+  "manifest_version": 3,
+  "version": "2.27",
+  "description": "Display the server IP address, with a realtime summary of IPv4, IPv6, and HTTPS information across all page elements.",
+  "homepage_url": "https://github.com/pmarks-net/ipvfoo",
+  "icons": {
+    "16": "icon16.png",
+    "128": "icon128.png"
+  },
+  "background": {
+    "scripts": ["iputil.js", "common.js", "background.js"]
+  },
+  "action": {
+    "default_icon": {
+      "16": "icon16_transparent.png"
+    }
+  },
+  "page_action": {
+    "default_icon": {
+      "16": "icon16_transparent.png"
+    }
+  },
+  "options_ui": {
+    "page": "options.html",
+    "browser_style": false
+  },
+  "permissions": [
+    "contextMenus",
+    "storage",
+    "webNavigation",
+    "webRequest"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ]
 }

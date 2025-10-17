@@ -1,11 +1,204 @@
 <!DOCTYPE html>
 <html>
+<!--
+Copyright (C) 2011  Paul Marks  http://www.pmarks.net/
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
 <head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="popup.css">
-    <script type="module" src="popup.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style type="text/css">
+body {
+  margin: 0;
+  font-family: serif;
+  font-size: medium;
+  background-color: #fff;
+  color: #000;
+}
+/* We want copy-paste to keep the domain in the first column,
+   so this draws a vertical line to fake the "zeroth" column. */
+table {
+  background-image: url("1x1_808080.png");
+  background-position: top 0px left 23px;
+  background-repeat: repeat-y;
+}
+table, td, tr {
+  border-width: 1px;
+  border-collapse: collapse;
+  border-color: #808080;
+  border-style: solid;
+  padding: 0pt 3pt 0pt 3pt;
+  white-space: nowrap;
+  user-select: none;
+}
+tr {
+  height: 21px;
+}
+img {
+  user-select: none;
+}
+img::selection {
+  background-color: transparent;
+}
+.mainRow {
+  font-weight: bold;
+}
+.sslImg {
+  padding-right: 6pt;
+}
+.domainTd {
+  user-select: text;
+}
+.addrTd {
+  font-family: monospace;
+  border-right-width: 0;
+  color: #000080;
+  padding-right: 0;
+  user-select: text;
+}
+.cacheTd {
+  border-left-width: 0;
+}
+.ip4 {
+  color: #800000;
+}
+.ip6 {
+  color: #008000;
+}
+.highlight {
+  background-color: #ffff90;
+}
+.border {
+  display: inline-block;
+  float: left;
+  padding: 6px;
+}
+
+.snippedTextInvisible {
+  /* When JS removes this style, the snipped text becomes visible. */
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  color: transparent;
+}
+.snipLinkInvisible {
+  display: none;
+}
+.snipLinkVisible {
+  /* When JS removes this style, the link becomes invisible. */
+  display: inline;
+}
+.snipImg {
+  /* Prevent Firefox 'Ctrl-A Ctrl-C' from inserting a line break. */
+  user-select: text;
+}
+
+#beg {
+  display: none;
+  margin-bottom: 10px;
+  padding: 10px;
+  width: 100%
+}
+#spill_count_container {
+  text-align: center;
+  font-weight: bold;
+  color: #808080;
+}
+#mobile_footer {
+  display: none; /* or flex */
+  justify-content: space-between;
+  align-items: center;
+}
+#options_link {
+  padding-top: 20px;
+  padding-bottom: 20px;
+  flex: 1;
+  font-size: large;
+  text-align: center;
+}
+#options_link a {
+  color: #808080;
+}
+#pattern_icon_lightfg {
+  display: none;
+}
+
+/* dark mode */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #222;
+    color: #eee;
+  }
+  .sslImg {
+    filter: invert(1);
+  }
+  .snipImg {
+    filter: invert(1);
+  }
+  .addrTd {
+    color: #8080ff;
+  }
+  .ip4 {
+    color: #ff8080;
+  }
+  .ip6 {
+    color: #80ff80;
+  }
+  .highlight {
+    background-color: #505030;
+  }
+  #pattern_icon_darkfg {
+    display: none;
+  }
+  #pattern_icon_lightfg {
+    display: initial;
+  }
+}
+
+@keyframes shake {
+  from, to {
+    transform: translate3d(0, 0, 0);
+  }
+  20%, 60% {
+    transform: translate3d(5px, 0, 0);
+  }
+  40%, 80% {
+    transform: translate3d(-5px, 0, 0);
+  }
+}
+.shake {
+  animation-name: shake;
+  animation-duration: 500ms;
+}
+
+</style>
+<script type="text/javascript" src="iputil.js"></script>
+<script type="text/javascript" src="common.js"></script>
+<script type="text/javascript" src="popup.js"></script>
 </head>
 <body>
-    <strong>Hello World!</strong>
+<div class="border">
+  <button id="beg">Click to grant permission</button>
+  <table id="addr_table" height="1px"></table>
+  <div id="spill_count_container">
+  &#x22ee; <span id="spill_count">0</span> requests omitted
+  </div>
+  <div id="mobile_footer">
+    <div id="options_link"><a href="options.html">Options</a></div>
+    <canvas id="pattern_icon_lightfg" width="32px" height="32px"></canvas>
+    <canvas id="pattern_icon_darkfg" width="32px" height="32px"></canvas>
+  </div>
+</div>
 </body>
 </html>
