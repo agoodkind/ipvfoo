@@ -71,24 +71,42 @@ async function beg() {
   });
 }
 
+chrome.runtime.onMessage.addListener((msg) => {
+  document.bgColor = "";
+  console.log("onMessage (browser)", msg.cmd, msg);
+  switch (msg.cmd) {
+    case "pushAll":
+      return pushAll(msg.tuples, msg.pattern, msg.color, msg.spillCount);
+    case "pushOne":
+      return pushOne(msg.tuple);
+    case "pushPattern":
+      return pushPattern(msg.pattern, msg.color);
+    case "pushSpillCount":
+      return pushSpillCount(msg.spillCount);
+    case "shake":
+      return shake();
+  }
+});
+
 function connectToExtension() {
   const port = chrome.runtime.connect(null, {name: tabId});
-  port.onMessage.addListener((msg) => {
-    document.bgColor = "";
-    console.log("onMessage", msg.cmd, msg);
-    switch (msg.cmd) {
-      case "pushAll":
-        return pushAll(msg.tuples, msg.pattern, msg.color, msg.spillCount);
-      case "pushOne":
-        return pushOne(msg.tuple);
-      case "pushPattern":
-        return pushPattern(msg.pattern, msg.color);
-      case "pushSpillCount":
-        return pushSpillCount(msg.spillCount);
-      case "shake":
-        return shake();
-    }
-  });
+  // port.onMessage.addListener((msg) => {
+  //   document.bgColor = "";
+  //   console.log("onMessage", msg.cmd, msg);
+  //   switch (msg.cmd) {
+  //     case "pushAll":
+  //       return pushAll(msg.tuples, msg.pattern, msg.color, msg.spillCount);
+  //     case "pushOne":
+  //       return pushOne(msg.tuple);
+  //     case "pushPattern":
+  //       return pushPattern(msg.pattern, msg.color);
+  //     case "pushSpillCount":
+  //       return pushSpillCount(msg.spillCount);
+  //     case "shake":
+  //       return shake();
+  //   }
+  // });
+
 
   port.onDisconnect.addListener(() => {
     document.bgColor = "lightpink";

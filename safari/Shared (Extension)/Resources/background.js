@@ -868,6 +868,14 @@ const storageReady = initStorage();
 class Popups {
   ports = newMap();  // tabId -> Port
 
+  sendMessage(tabId, data) {
+    this.ports[tabId]?.postMessage(data);
+    chrome.tabs.sendMessage(parseInt(tabId, 10), data).catch((err) => {
+    });
+    chrome.runtime.sendMessage({tabId, ...data}).catch((err) => {
+    });
+  };
+
   // Attach a new popup window, and start sending it updates.
   attachPort(port) {
     const tabId = port.name;
@@ -881,21 +889,12 @@ class Popups {
   };
 
   pushAll(tabId, tuples, pattern, color, spillCount) {
-    this.ports[tabId]?.postMessage({
+    this.sendMessage(tabId, {
       cmd: "pushAll",
       tuples: tuples,
       pattern: pattern,
       color: color,
       spillCount: spillCount,
-    });
-    chrome.tabs.sendMessage(parseInt(tabId, 10), {
-      cmd: "pushAll",
-      tuples: tuples,
-      pattern: pattern,
-      color: color,
-      spillCount: spillCount,
-    }).catch((err) => {
-      // Ignore errors, which happen if there is no content script.
     });
   };
 
@@ -903,68 +902,38 @@ class Popups {
     if (!tuple) {
       return;
     }
-    this.ports[tabId]?.postMessage({
+    this.sendMessage(tabId, {
       cmd: "pushOne",
       tuple: tuple,
-    });
-    chrome.tabs.sendMessage(parseInt(tabId, 10), {
-      cmd: "pushOne",
-      tuple: tuple,
-    }).catch((err) => {
-      // Ignore errors, which happen if there is no content script.
     });
   };
 
   pushPattern(tabId, pattern, color) {
-    this.ports[tabId]?.postMessage({
+    this.sendMessage(tabId, {
       cmd: "pushPattern",
       pattern: pattern,
       color: color,
-    });
-    chrome.tabs.sendMessage(parseInt(tabId, 10), {
-      cmd: "pushPattern",
-      pattern: pattern,
-      color: color,
-    }).catch((err) => {
-      // Ignore errors, which happen if there is no content script.
     });
   };
 
   pushSpillCount(tabId, count) {
-    this.ports[tabId]?.postMessage({
+    this.sendMessage(tabId, {
       cmd: "pushSpillCount",
       spillCount: count,
-    });
-    chrome.tabs.sendMessage(parseInt(tabId, 10), {
-      cmd: "pushSpillCount",
-      spillCount: count,
-    }).catch((err) => {
-      // Ignore errors, which happen if there is no content script.
     });
   };
 
   shake(tabId) {
-    this.ports[tabId]?.postMessage({
+    this.sendMessage(tabId, {
       cmd: "shake",
-    });
-    chrome.tabs.sendMessage(parseInt(tabId, 10), {
-      cmd: "shake",
-    }).catch((err) => {
-      // Ignore errors, which happen if there is no content script.
     });
   }
 
   relayLog(message) {
     for (const tabId of Object.keys(this.ports)) {
-      this.ports[tabId]?.postMessage({
+      this.sendMessage(tabId, {
         cmd: "relayLog",
         message: message,
-      });
-      chrome.tabs.sendMessage(parseInt(tabId, 10), {
-        cmd: "relayLog",
-        message: message,
-      }).catch((err) => {
-        // Ignore errors, which happen if there is no content script.
       });
     }
   }
