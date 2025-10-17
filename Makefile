@@ -1,8 +1,8 @@
 BUILDDIR := build/
 NAME := ipvfoo
 MANIFEST := src/manifest.json
-MANIFEST_F := src/manifest/firefox-manifest.json
-MANIFEST_C := src/manifest/chrome-manifest.json
+MANIFEST_F := manifest/firefox-manifest.json
+MANIFEST_C := manifest/chrome-manifest.json
 VERSION_F := $(shell cat ${MANIFEST_F} | \
 	sed -n 's/^ *"version": *"\([0-9.]\+\)".*/\1/p' | \
 	head -n1)

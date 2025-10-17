@@ -6,5 +6,5 @@
 
 @REM This part is a Windows batch file
 CD /D "%~dp0"
-COPY "chrome-manifest.json" "..\manifest.json"
+COPY "chrome-manifest.json" "..\src\manifest.json"
 @PAUSE

@@ -37,6 +37,15 @@ user can demand a popup before any IP addresses are available.
 
 "use strict";
 
+const DEBUG = true;
+
+function debugLog() {
+  if (DEBUG) {
+    const timestamp = new Date().toISOString();
+    console.log(timestamp, ...arguments);
+    popups.relayLog({  message: arguments, timestamp: timestamp });
+  }
+}
 if (chrome.runtime.getManifest().background.service_worker) {
   // This only runs on Chrome.
   // Firefox uses manifest.json/background/scripts instead.
@@ -65,12 +74,10 @@ const NAME_VERSION = (() => {
   return `${m.name} v${m.version}`;
 })();
 
-let debug = false;
-function debugLog() {
-  if (debug) {
-    console.log(new Date().toISOString(), ...arguments);
-  }
-}
+const isSafari = (typeof webkitURL !== 'undefined');
+// Once Chrome adds support for browser.* this needs to be updated
+// https://issues.chromium.org/issues/40556351
+const isFirefox = (typeof browser !== 'undefined' && !isSafari);
 
 // Log errors from async listeners, because otherwise Firefox hides them
 // in the global console.
@@ -602,10 +609,15 @@ const tabMap = new SaveableMap(TabInfo, "tab/")
 // requestId -> RequestInfo
 const requestMap = new SaveableMap(RequestInfo, "req/");
 
-// Firefox-only domain->ip cache, to help work around
+// For Firefox & Safari domain->ip cache
+// in Firefox cached pages do not return IP in details
 // https://bugzilla.mozilla.org/show_bug.cgi?id=1395020
+// in Safari, IP is never returned in details
+// likely due to Apple's stance on privacy
+// https://github.com/pmarks-net/ipvfoo/issues/39
 const IP_CACHE_LIMIT = 1024;
-const ipCache = (typeof browser == "undefined") ? null : new SaveableMap(IPCacheEntry, "ip/");
+const ipCache = (isFirefox || isSafari) ?
+  new SaveableMap(IPCacheEntry, "ip/") : null;
 let ipCacheSize = 0;
 
 function ipCacheGrew() {
@@ -652,6 +664,126 @@ function lookupOriginMap(origin) {
   // returns a Set of tabId values.
   return originMap[origin] || new Set();
 }
+
+// Cache IPv6 connectivity status to avoid repeated checks
+let ipv6ConnectivityCache = {
+  hasIPv6: null,
+  lastCheck: 0,
+  checkInterval: 5 * 60 * 1000 // 5 minutes
+};
+
+const checkIPv6Connectivity = async () => {
+  const now = Date.now();
+  
+  // Return cached result if recent
+  if (ipv6ConnectivityCache.hasIPv6 !== null && 
+      now - ipv6ConnectivityCache.lastCheck < ipv6ConnectivityCache.checkInterval) {
+    return ipv6ConnectivityCache.hasIPv6;
+  }
+
+  try {
+    // Test IPv6 connectivity by trying to reach Google's IPv6-only test endpoint
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1000);
+    
+    const response = await fetch('https://ipv6.google.com/', {
+      method: 'HEAD',
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    ipv6ConnectivityCache.hasIPv6 = response.ok;
+  } catch (error) {
+    // If the request fails, assume no IPv6 connectivity
+    ipv6ConnectivityCache.hasIPv6 = false;
+  }
+  
+  ipv6ConnectivityCache.lastCheck = now;
+  debugLog("IPv6 connectivity check:", ipv6ConnectivityCache.hasIPv6);
+  return ipv6ConnectivityCache.hasIPv6;
+};
+
+// Simple in-memory DNS cache for Safari web extensions
+const dnsCache = new Map();
+const DNS_CACHE_TTL = 2 * 1000; // 2 seconds
+const DNS_CACHE_MAX_SIZE = 100;
+
+// Periodically clean up expired cache entries
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of dnsCache.entries()) {
+    if (now - entry.timestamp >= DNS_CACHE_TTL) {
+      dnsCache.delete(key);
+      debugLog("DOH cache entry expired for", key);
+    }
+  }
+}, DNS_CACHE_TTL);
+
+/**
+ * Looks up a domain using DNS over HTTPS (DoH) with in-memory caching.
+ * @param {string} domain - The domain to look up.
+ * @returns {Promise<string>} - The resolved IP address.
+ */
+const lookupDomainDOH = async (domain) => {
+  const now = Date.now();
+  
+  // Check cache first
+  const cacheEntry = dnsCache.get(domain);
+  if (cacheEntry && (now - cacheEntry.timestamp < DNS_CACHE_TTL)) {
+    debugLog("DOH cache hit for", domain);
+    return cacheEntry.ip;
+  }
+
+  const hasV6Connectivity = await checkIPv6Connectivity();
+  
+  const promises = []
+  if (hasV6Connectivity) {
+    promises.push(
+      fetch(`https://one.one.one.one/dns-query?name=${domain}&type=AAAA`, {
+        headers: { 'Accept': 'application/dns-json' }
+      })
+    );
+  }
+
+  // This will also use HTTP/2 multiplexing to request both A and AAAA records in parallel
+  promises.push(
+    fetch(`https://one.one.one.one/dns-query?name=${domain}&type=A`, {
+      headers: { 'Accept': 'application/dns-json' }
+    })
+  );
+  
+  try {
+    const responses = await Promise.all(promises);
+    const jsonResults = await Promise.all(responses.map(r => r.json()));
+    /**
+     * @type {{
+     *   TTL: number,
+     *   data: string,
+     *   name: string,
+     *   type: number,
+     * }[]}
+     */
+    const allResults = jsonResults.flatMap(result => result.Answer || []);
+    const ip = allResults
+      .filter(d => d.type === 28 || d.type === 1)
+      // only include AAAA (28) and A (1) records
+      .map(d => d.data)[0] || null;
+
+    // Cache the result
+    if (ip) {
+      dnsCache.set(domain, {
+        ip: ip,
+        timestamp: now
+      });
+      debugLog("DOH result cached for", domain);
+    }
+
+    return ip;
+  } catch (error) {
+    debugLog("DOH lookup failed:", error);
+    return null;
+  }
+};
 
 // Dark mode detection. This can eventually be replaced by
 // https://github.com/w3c/webextensions/issues/229
@@ -736,6 +868,14 @@ const storageReady = initStorage();
 class Popups {
   ports = newMap();  // tabId -> Port
 
+  sendMessage(tabId, data) {
+    this.ports[tabId]?.postMessage(data);
+    chrome.tabs.sendMessage(parseInt(tabId, 10), data).catch((err) => {
+    });
+    chrome.runtime.sendMessage({tabId, ...data}).catch((err) => {
+    });
+  };
+
   // Attach a new popup window, and start sending it updates.
   attachPort(port) {
     const tabId = port.name;
@@ -749,7 +889,7 @@ class Popups {
   };
 
   pushAll(tabId, tuples, pattern, color, spillCount) {
-    this.ports[tabId]?.postMessage({
+    this.sendMessage(tabId, {
       cmd: "pushAll",
       tuples: tuples,
       pattern: pattern,
@@ -762,14 +902,14 @@ class Popups {
     if (!tuple) {
       return;
     }
-    this.ports[tabId]?.postMessage({
+    this.sendMessage(tabId, {
       cmd: "pushOne",
       tuple: tuple,
     });
   };
 
   pushPattern(tabId, pattern, color) {
-    this.ports[tabId]?.postMessage({
+    this.sendMessage(tabId, {
       cmd: "pushPattern",
       pattern: pattern,
       color: color,
@@ -777,16 +917,25 @@ class Popups {
   };
 
   pushSpillCount(tabId, count) {
-    this.ports[tabId]?.postMessage({
+    this.sendMessage(tabId, {
       cmd: "pushSpillCount",
       spillCount: count,
     });
   };
 
   shake(tabId) {
-    this.ports[tabId]?.postMessage({
+    this.sendMessage(tabId, {
       cmd: "shake",
     });
+  }
+
+  relayLog(message) {
+    for (const tabId of Object.keys(this.ports)) {
+      this.sendMessage(tabId, {
+        cmd: "relayLog",
+        message: message,
+      });
+    }
   }
 }
 
@@ -940,7 +1089,7 @@ chrome.tabs.onUpdated.addListener(wrap(async (tabId, changeInfo, tab) => {
 // -- webRequest --
 
 chrome.webRequest.onBeforeRequest.addListener(wrap(async (details) => {
-  //debugLog("wR.oBR", details?.tabId, details?.url, details);
+  debugLog("wR.oBR", details?.tabId, details?.url, details);
   await storageReady;
   const tabId = details.tabId;
   const tabInfos = [];
@@ -1015,7 +1164,7 @@ chrome.webRequest.onBeforeRedirect.addListener(wrap(async (details) => {
 }), FILTER_ALL_URLS);
 
 chrome.webRequest.onResponseStarted.addListener(wrap(async (details) => {
-  //debugLog("wR.oRS", details?.tabId, details?.url, details);
+  debugLog("wR.oRS", details?.tabId, details?.url, details);
   await storageReady;
   const requestInfo = requestMap[details.requestId];
   if (!requestInfo) {
@@ -1040,6 +1189,11 @@ chrome.webRequest.onResponseStarted.addListener(wrap(async (details) => {
   let addr = details.ip;
   let fromCache = details.fromCache;
 
+  // If no IP address is available and we have a domain, try DNS over HTTPS lookup
+  if (!addr && isSafari) {
+    addr = await lookupDomainDOH(parsed.domain);
+  }
+
   if (!fromCache) {
     updateNAT64(parsed.domain, addr);
   }
@@ -1063,6 +1217,7 @@ chrome.webRequest.onResponseStarted.addListener(wrap(async (details) => {
       }
     }
   }
+
   addr = reformatForNAT64(addr) || "(no address)";
 
   let flags = parsed.ssl ? FLAG_SSL : FLAG_NOSSL;
