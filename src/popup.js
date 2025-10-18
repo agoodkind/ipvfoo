@@ -8,6 +8,7 @@ import {
   FLAG_UNCACHED,
   FLAG_WEBSOCKET,
   IS_MOBILE,
+  isSafari,
   optionsReady,
   removeChildren,
   setColorIsDarkMode,
@@ -37,7 +38,7 @@ let table = null;
 let lastPattern = "";
 let lastColor = "";  // regular/incognito color scheme
 
-window.onload = async function() {
+window.onload = async function () {
   table = document.getElementById("addr_table");
   table.onmousedown = handleMouseDown;
   // Set table background image from inlined PNG
@@ -74,15 +75,16 @@ async function beg() {
     // We need to close the popup before awaiting, otherwise
     // Firefox (at least version 116 on Windows) renders the
     // permission dialog underneath the popup.
-    const promise = chrome.permissions.request({origins: [ALL_URLS]});
+    const promise = chrome.permissions.request({ origins: [ALL_URLS] });
     window.close();
     await promise;
   });
 }
 
-chrome.runtime.onMessage.addListener((msg) => {
+
+function msgListener(msg) {
   document.bgColor = "";
-  console.log("onMessage (browser)", msg.cmd, msg);
+  VERBOSE1: console.log("onMessage", msg.cmd, msg);
   switch (msg.cmd) {
     case "pushAll":
       return pushAll(msg.tuples, msg.pattern, msg.color, msg.spillCount);
@@ -95,32 +97,19 @@ chrome.runtime.onMessage.addListener((msg) => {
     case "shake":
       return shake();
   }
-});
+}
 
 function connectToExtension() {
-  const port = chrome.runtime.connect(null, {name: tabId});
-  // port.onMessage.addListener((msg) => {
-  //   document.bgColor = "";
-  //   console.log("onMessage", msg.cmd, msg);
-  //   switch (msg.cmd) {
-  //     case "pushAll":
-  //       return pushAll(msg.tuples, msg.pattern, msg.color, msg.spillCount);
-  //     case "pushOne":
-  //       return pushOne(msg.tuple);
-  //     case "pushPattern":
-  //       return pushPattern(msg.pattern, msg.color);
-  //     case "pushSpillCount":
-  //       return pushSpillCount(msg.spillCount);
-  //     case "shake":
-  //       return shake();
-  //   }
-  // });
-
-
-  port.onDisconnect.addListener(() => {
-    document.bgColor = "lightpink";
-    setTimeout(connectToExtension, 1);
-  });
+  if (isSafari) {
+    chrome.runtime.onMessage.addListener(msgListener);
+  } else {
+    const port = chrome.runtime.connect(null, { name: tabId });
+    port.onMessage.addListener(msgListener);
+    port.onDisconnect.addListener(() => {
+      document.bgColor = "lightpink";
+      setTimeout(connectToExtension, 1);
+    });
+  }
 }
 
 // Clear the table, and fill it with new data.
@@ -185,9 +174,9 @@ async function pushPattern(pattern, color) {
 // Count must be a number.
 function pushSpillCount(count) {
   document.getElementById("spill_count_container").style.display =
-      count == 0 ? "none" : "block";
+    count == 0 ? "none" : "block";
   removeChildren(document.getElementById("spill_count")).appendChild(
-      document.createTextNode(count));
+    document.createTextNode(count));
   if (IS_MOBILE) {
     zoomHack();
   } else {
@@ -198,7 +187,7 @@ function pushSpillCount(count) {
 // Shake the content (for 500ms) to signal an error.
 function shake() {
   document.body.className = "shake";
-  setTimeout(function() {
+  setTimeout(function () {
     document.body.className = "";
   }, 600);
 }
@@ -230,8 +219,8 @@ function scrollbarHack() {
 function minimalCopy(src, dst) {
   dst.className = src.className;
   for (let s = src.firstChild, d = dst.firstChild, sNext, dNext;
-       s && d;
-       s = sNext, d = dNext) {
+    s && d;
+    s = sNext, d = dNext) {
     sNext = s.nextSibling;
     dNext = d.nextSibling;
     // First, sync up the class names.
@@ -255,17 +244,17 @@ function makeSslImg(flags) {
   switch (flags & (FLAG_SSL | FLAG_NOSSL)) {
     case FLAG_SSL | FLAG_NOSSL:
       return makeImg(
-          graySchrodingersLockUrl,
-          "Mixture of HTTPS and non-HTTPS connections.");
+        graySchrodingersLockUrl,
+        "Mixture of HTTPS and non-HTTPS connections.");
     case FLAG_SSL:
       return makeImg(
-          grayLockUrl,
-          "Connection uses HTTPS.\n" +
-          "Warning: IPvFoo does not verify the integrity of encryption.");
+        grayLockUrl,
+        "Connection uses HTTPS.\n" +
+        "Warning: IPvFoo does not verify the integrity of encryption.");
     default:
       return makeImg(
-          grayUnlockUrl,
-          "Connection does not use HTTPS.");
+        grayUnlockUrl,
+        "Connection does not use HTTPS.");
   }
 }
 
@@ -319,15 +308,15 @@ function makeRow(isFirst, tuple) {
   cacheTd.className = `cacheTd${connectedClass}`;
   if (flags & FLAG_WEBSOCKET) {
     cacheTd.appendChild(
-        makeImg(websocketUrl, "WebSocket handshake; connection may still be active."));
+      makeImg(websocketUrl, "WebSocket handshake; connection may still be active."));
     cacheTd.style.paddingLeft = '6pt';
   } else if (!(flags & FLAG_NOTWORKER)) {
     cacheTd.appendChild(
-        makeImg(serviceworkerUrl, "Service Worker request; possibly from a different tab."));
+      makeImg(serviceworkerUrl, "Service Worker request; possibly from a different tab."));
     cacheTd.style.paddingLeft = '6pt';
   } else if (!(flags & FLAG_UNCACHED)) {
     cacheTd.appendChild(
-        makeImg(cachedArrowUrl, "Data from cached requests only."));
+      makeImg(cachedArrowUrl, "Data from cached requests only."));
     cacheTd.style.paddingLeft = '6pt';
   } else {
     cacheTd.style.paddingLeft = '0';
@@ -417,7 +406,7 @@ function isSpuriousSelection(sel, newTimeStamp) {
     const r1 = sel.getRangeAt(i);
     const r2 = oldRanges[i];
     if (r1.compareBoundaryPoints(Range.START_TO_START, r2) != 0 ||
-        r1.compareBoundaryPoints(Range.END_TO_END, r2) != 0) {
+      r1.compareBoundaryPoints(Range.END_TO_END, r2) != 0) {
       return true;
     }
   }

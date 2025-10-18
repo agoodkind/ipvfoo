@@ -69,10 +69,9 @@ const checkIPv6Connectivity = async () => {
   return ipv6ConnectivityCache.hasIPv6;
 };
 
-// Simple in-memory DNS cache for Safari web extensions
+// Simple in-memory DNS cache to debounce rapid lookups
 const dnsCache = new Map();
 const DNS_CACHE_TTL = 10 * 1000; // 10 seconds
-const DNS_CACHE_MAX_SIZE = 100;
 
 // Periodically clean up expired cache entries
 setInterval(() => {

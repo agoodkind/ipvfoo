@@ -24,11 +24,12 @@ import {
   watchOptions,
   sleep,
   IS_MOBILE,
-  reformatForNAT64
+  reformatForNAT64,
+  isFirefox,
+  isSafari
 } from "./lib/common.js";
 
 import {lookupDomainNative} from "./lib/safari.js";
-import {debugLog} from "./lib/logger.js";
 import { parseIP } from "lib/iputil.js";
 
 /*
@@ -69,17 +70,6 @@ user can demand a popup before any IP addresses are available.
 */
 
 "use strict";
-
-const isSafari = (typeof webkitURL !== 'undefined');
-// Once Chrome adds support for browser.* this needs to be updated
-// https://issues.chromium.org/issues/40556351
-const isFirefox = (typeof browser !== 'undefined' && !isSafari);
-
-// if (chrome.runtime.getManifest().background.service_worker) {
-//   // This only runs on Chrome.
-//   // Firefox uses manifest.json/background/scripts instead.
-//   importScripts("iputil.js", "common.js");
-// }
 
 // Possible states for an instance of TabInfo.
 // We begin at BIRTH, and only ever move forward, not backward.
@@ -219,7 +209,7 @@ class SaveableEntry {
       if (this.#savedJSON == j) {
         return;
       }
-      //console.log("saving", key, j);
+      VERBOSE3: console.log("saving", key, j);
       await chrome.storage.session.set({[key]: j});
       this.#savedJSON = j;
     }
@@ -598,7 +588,7 @@ class RequestInfo extends SaveableEntry {
     }
     if (Object.keys(this.tabIdToBorn).length == 0) {
       requestMap.remove(this.id());
-      console.log("garbage-collected RequestInfo", this.id());
+      VERBOSE1: console.log("garbage-collected RequestInfo", this.id());
       return;
     }
   }
@@ -628,7 +618,7 @@ let ipCacheSize = 0;
 
 function ipCacheGrew() {
   ++ipCacheSize;
-  //console.log("ipCache", ipCacheSize, Object.keys(ipCache).length);
+  VERBOSE2: console.log("ipCache", ipCacheSize, Object.keys(ipCache).length);
   if (ipCacheSize <= IP_CACHE_LIMIT) {
     return;
   }
@@ -686,7 +676,7 @@ if (typeof window !== 'undefined' && window.matchMedia) {
 } else {
   // Chrome needs an offscreen document to detect dark mode.
   chrome.runtime.onMessage.addListener((message) => {
-    console.log("onMessage", message);
+    VERBOSE2: console.log("onMessage", message);
     if (message.hasOwnProperty("darkModeOffscreen")) {
       setColorIsDarkMode(REGULAR_COLOR, message.darkModeOffscreen);
     }
@@ -696,12 +686,12 @@ if (typeof window !== 'undefined' && window.matchMedia) {
     await optionsReady;
     try {
       await chrome.offscreen.createDocument({
-        url: "detectdarkmode.html",
+        url: "assets/detectdarkmode.html",
         reasons: ['MATCH_MEDIA'],
         justification: 'detect light/dark mode for icon colors',
       });
     } catch {
-      console.log("detectdarkmode failed!");
+      VERBOSE1: console.log("detectdarkmode failed!");
     }
     // The offscreen document can't provide darkMode updates, so kill it now.
     // We will still get updates from the popup windows when visible.
@@ -755,11 +745,19 @@ class Popups {
   ports = newMap();  // tabId -> Port
 
   sendMessage(tabId, data) {
-    this.ports[tabId]?.postMessage(data);
-    chrome.tabs.sendMessage(parseInt(tabId, 10), data).catch((err) => {
-    });
-    chrome.runtime.sendMessage({tabId, ...data}).catch((err) => {
-    });
+    try {
+      this.ports[tabId]?.postMessage(data);
+    } catch (err) {
+      VERBOSE2: console.error("sendMessage", "port", tabId, err);
+    }
+    if (isSafari) {
+      chrome.tabs.sendMessage(parseInt(tabId, 10), data).catch((err) => {
+        VERBOSE2: console.error("sendMessage","tab", tabId, err);
+      });
+      chrome.runtime.sendMessage({tabId, ...data}).catch((err) => {
+        VERBOSE2: console.error("sendMessage", "runtime", tabId, err);
+      });
+    }
   };
 
   // Attach a new popup window, and start sending it updates.
@@ -901,13 +899,13 @@ class TabTracker {
   }
 
   #addTab(tabId, logText) {
-    debugLog("addTab", tabId, logText);
+    VERBOSE3: console.log("addTab", tabId, logText);
     this.tabSet[tabId] = true;
     tabMap[tabId]?.makeAlive();
   }
 
   #removeTab(tabId, logText) {
-    debugLog("removeTab", tabId, logText);
+    VERBOSE3: console.log("removeTab", tabId, logText);
     delete this.tabSet[tabId];
     if (tabMap[tabId]?.tooYoungToDie()) {
       return;
@@ -939,7 +937,7 @@ chrome.webNavigation.onBeforeNavigate.addListener(wrap(async (details) => {
   if (requestInfo && requestInfo.domain == null) {
     return;  // Typical no-op case.
   }
-  debugLog(`tabId=${details.tabId} is a service worker or special URL`);
+  VERBOSE3: console.log(`tabId=${details.tabId} is a service worker or special URL`);
   const parsed = parseUrl(details.url);
   tabMap.remove(details.tabId);
   tabInfo = tabMap.lookupOrNew(details.tabId);
@@ -947,7 +945,7 @@ chrome.webNavigation.onBeforeNavigate.addListener(wrap(async (details) => {
 }));
 
 chrome.webNavigation.onCommitted.addListener(wrap(async (details) => {
-  debugLog("wN.oC", details?.tabId, details?.url, details);
+  VERBOSE3: console.log("wN.oC", details?.tabId, details?.url, details);
   await storageReady;
   if (details.frameId != 0) {
     return;
@@ -963,7 +961,7 @@ chrome.webNavigation.onCommitted.addListener(wrap(async (details) => {
 // is hacky and inefficient, but the back-stabbing browser leaves me no choice.
 // This seems to fix http://crbug.com/124970 and some problems on Google+.
 chrome.tabs.onUpdated.addListener(wrap(async (tabId, changeInfo, tab) => {
-  debugLog("tabs.oU", tabId);
+  VERBOSE2: console.log("tabs.oU", tabId);
   await storageReady;
   const tabInfo = tabMap[tabId];
   if (tabInfo) {
@@ -975,7 +973,7 @@ chrome.tabs.onUpdated.addListener(wrap(async (tabId, changeInfo, tab) => {
 // -- webRequest --
 
 chrome.webRequest.onBeforeRequest.addListener(wrap(async (details) => {
-  debugLog("wR.oBR", details?.tabId, details?.url, details);
+  VERBOSE3: console.log("wR.oBR", details?.tabId, details?.url, details);
   await storageReady;
   const tabId = details.tabId;
   const tabInfos = [];
@@ -1050,7 +1048,7 @@ chrome.webRequest.onBeforeRedirect.addListener(wrap(async (details) => {
 }), FILTER_ALL_URLS);
 
 chrome.webRequest.onResponseStarted.addListener(wrap(async (details) => {
-  debugLog("wR.oRS", details?.tabId, details?.url, details);
+  VERBOSE2: console.log("wR.oRS", details?.tabId, details?.url, details);
   await storageReady;
   const requestInfo = requestMap[details.requestId];
   if (!requestInfo) {

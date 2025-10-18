@@ -35,6 +35,13 @@ export const FLAG_NOTWORKER = 0x20;  // from a tab, not a service worker
 
 export const IPV4_ONLY_DOMAINS = new Set(["ipv4.google.com", "ipv4.icanhazip.com", "ipv4.whatismyip.akamai.com"]);
 
+const isSafari = (typeof webkitURL !== 'undefined');
+// Once Chrome adds support for browser.* this needs to be updated
+// https://issues.chromium.org/issues/40556351
+const isFirefox = (typeof browser !== 'undefined' && !isSafari);
+
+export { isSafari, isFirefox };
+
 // Returns an Object with no default properties.
 export function newMap() {
   return Object.create(null);
