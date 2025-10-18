@@ -79,24 +79,6 @@
       .flash {
         animation: flash-yellow 0.6s ease-out;
       }
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-      .spinner {
-        display: inline-block;
-        width: 14px;
-        height: 14px;
-        border: 2px solid #ccc;
-        border-top-color: #333;
-        border-radius: 50%;
-        animation: spin 0.6s linear infinite;
-        margin-left: 8px;
-      }
       .controls {
         margin-bottom: 20px;
         display: flex;
@@ -131,6 +113,8 @@
       const DOMAINS = [
         'https://ipv4.google.com',
         'https://ipv6.google.com',
+        'https://ipv4.bing.com',
+        'https://ipv4.google.com',
         'https://google.com',
         'http://localhost:8080/ping',
         'http://127.0.0.1:8080/ping',
@@ -160,7 +144,6 @@
         onToggle,
         status,
         onTest,
-        isLoading,
       }) {
         const prevMessageRef = useRef(status.message)
         const [flashParts, setFlashParts] = useState(() =>
@@ -219,7 +202,6 @@
                   <span className="url-path">{path}</span>
                 )}
               </label>
-              {isLoading && <div className="spinner"></div>}
             </div>
             <div className={`status ${status.className}`}>
               {flashParts.map((part, i) => (
@@ -249,9 +231,8 @@
           return saved ? parseInt(saved) : 100
         })
 
-        const [isRunning, setIsRunning] = useState(false)
-        const [stopRequested, setStopRequested] = useState(false)
-        const [loadingDomains, setLoadingDomains] = useState({})
+            const [isRunning, setIsRunning] = useState(false)
+            const stopRequestedRef = useRef(false)
 
         const [statuses, setStatuses] = useState(
           Object.fromEntries(
@@ -285,8 +266,6 @@
         }, [enabledDomains])
 
         const testDomain = useCallback(async (domain) => {
-          setLoadingDomains((prev) => ({ ...prev, [domain]: true }))
-
           try {
             const startTime = Date.now()
             await fetch(domain, { method: 'HEAD', mode: 'no-cors' })
@@ -307,8 +286,6 @@
                 className: 'error',
               },
             }))
-          } finally {
-            setLoadingDomains((prev) => ({ ...prev, [domain]: false }))
           }
         }, [])
 
@@ -327,9 +304,9 @@
           }
 
           setIsRunning(true)
-          setStopRequested(false)
+          stopRequestedRef.current = false
 
-          while (!stopRequested) {
+          while (!stopRequestedRef.current) {
             enabled = getEnabledDomains()
 
             if (enabled.length === 0) {
@@ -341,29 +318,22 @@
             await testDomain(domain)
             await sleep(pauseTime)
 
-            if (stopRequested) break
+            if (stopRequestedRef.current) break
           }
 
           setIsRunning(false)
         }, [
           enabledDomains,
           pauseTime,
-          stopRequested,
           testDomain,
           getEnabledDomains,
         ])
 
-        useEffect(() => {
-          if (stopRequested && isRunning) {
-            setIsRunning(false)
-          }
-        }, [stopRequested, isRunning])
-
         const handleToggleTest = () => {
           if (isRunning) {
-            setStopRequested(true)
+            stopRequestedRef.current = true
+            setIsRunning(false)
           } else {
-            setStopRequested(false)
             runTests()
           }
         }
@@ -396,7 +366,6 @@
                   onToggle={toggleDomain}
                   status={statuses[domain]}
                   onTest={testDomain}
-                  isLoading={loadingDomains[domain]}
                 />
               ))}
             </div>
