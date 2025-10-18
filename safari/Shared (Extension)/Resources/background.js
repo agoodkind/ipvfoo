@@ -1073,7 +1073,7 @@ chrome.webRequest.onResponseStarted.addListener(wrap(async (details) => {
 
   // If no IP address is available and we have a domain, try DNS over HTTPS lookup
   if (!addr && isSafari) {
-    addr = await lookupDomainDOH(parsed.domain);
+    addr = await lookupDomainNative(parsed.domain);
   }
 
   if (!fromCache) {

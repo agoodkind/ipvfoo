@@ -1,102 +1,85 @@
-//
-//  SafariWebExtensionHandler.swift
-//  Shared (Extension)
-//
-//  Created by Alex Goodkind on 10/17/25.
-//
-
-import Network
 import os.log
 import SafariServices
 
 class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
-    func lookupDomain(_ domain: String) -> String? {
-        os_log(.default, "[DNS] Starting lookup for: %{public}@", domain)
-        let host = CFHostCreateWithName(nil, domain as CFString).takeRetainedValue()
-        os_log(.default, "[DNS] CFHost created")
-
-        var error = CFStreamError()
-        let started = CFHostStartInfoResolution(host, .addresses, &error)
-        os_log(.default, "[DNS] Resolution started: %{public}d, error domain: %{public}d, error code: %{public}d", started, error.domain, error.error)
-
-        var success: DarwinBoolean = false
-        guard let addresses = CFHostGetAddressing(host, &success)?.takeUnretainedValue() as NSArray?, success.boolValue else {
-            os_log(.error, "[DNS] CFHostGetAddressing returned nil or failed, success: %{public}d", success.boolValue)
-            return nil
+    func lookupDomain(_ domain: String) -> [[String: String]] {
+        os_log(.debug, "[DNS] Looking up: %{public}@", domain)
+        
+        var hints = addrinfo()
+        hints.ai_family = AF_UNSPEC
+        hints.ai_socktype = SOCK_STREAM
+        hints.ai_flags = AI_ADDRCONFIG
+        
+        var result: UnsafeMutablePointer<addrinfo>?
+        let status = getaddrinfo(domain, nil, &hints, &result)
+        guard status == 0, let head = result else {
+            let errStr = String(cString: gai_strerror(status))
+            os_log(.error, "[DNS] Failed: %{public}d (%{public}@)", status, errStr)
+            return []
         }
-
-        os_log(.default, "[DNS] Got %{public}d addresses", addresses.count)
-
-        for (index, element) in addresses.enumerated() {
-            guard let theAddress = element as? NSData else { continue }
-            os_log(.default, "[DNS] Processing address %{public}d, length: %{public}d", index, theAddress.length)
-            var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-            if getnameinfo(theAddress.bytes.assumingMemoryBound(to: sockaddr.self), socklen_t(theAddress.length),
-                           &hostname, socklen_t(hostname.count), nil, 0, NI_NUMERICHOST) == 0
-            {
-                let ip = String(cString: hostname)
-                os_log(.default, "[DNS] Resolved to: %{public}@", ip)
-                return ip
-            } else {
-                os_log(.error, "[DNS] getnameinfo failed for address %{public}d", index)
+        defer { freeaddrinfo(head) }
+        
+        var addresses: [[String: String]] = []
+        var cursor: UnsafeMutablePointer<addrinfo>? = head
+        while let current = cursor {
+            if let addr = current.pointee.ai_addr {
+                var host = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+                if getnameinfo(addr, socklen_t(current.pointee.ai_addrlen), &host, socklen_t(host.count), nil, 0, NI_NUMERICHOST) == 0 {
+                    let version = current.pointee.ai_family == AF_INET ? "v4" : "v6"
+                    let address = String(cString: host)
+                    os_log(.debug, "[DNS] Found %{public}@ (%{public}@)", address, version)
+                    addresses.append(["address": address, "version": version])
+                }
             }
+            cursor = current.pointee.ai_next
         }
-
-        os_log(.error, "[DNS] No valid addresses found")
-        return nil
+        
+        os_log(.debug, "[DNS] Resolved %{public}d addresses", addresses.count)
+        return addresses
     }
-
+    
     func beginRequest(with context: NSExtensionContext) {
-        os_log(.default, "[Begin] Handling new extension request")
-        let request = context.inputItems.first as? NSExtensionItem
-        os_log(.default, "[Begin] Extracted first input item: %{public}@", String(describing: request))
-
-        let profile: UUID?
-        if #available(iOS 17.0, macOS 14.0, *) {
-            profile = request?.userInfo?[SFExtensionProfileKey] as? UUID
-        } else {
-            profile = request?.userInfo?["profile"] as? UUID
+        os_log(.debug, "[Request] Received")
+        
+        guard let request = context.inputItems.first as? NSExtensionItem else {
+            os_log(.error, "[Request] No input item")
+            return
         }
-        os_log(.default, "[Begin] Profile: %{public}@", profile?.uuidString ?? "none")
-
+        
         let message: Any?
         if #available(iOS 15.0, macOS 11.0, *) {
-            message = request?.userInfo?[SFExtensionMessageKey]
+            message = request.userInfo?[SFExtensionMessageKey]
         } else {
-            message = request?.userInfo?["message"]
+            message = request.userInfo?["message"]
         }
-        os_log(.default, "[Begin] Raw message payload: %{public}@", String(describing: message))
-
-        os_log(.default, "[Begin] Parsing message for command routing")
-
-        var responseMessage: [String: Any] = [:]
-
+        
+        os_log(.debug, "[Request] Message: %{public}@", String(describing: message))
+        
+        let responseMessage: [String: Any]
         if let messageDict = message as? [String: Any],
-           let cmd = messageDict["cmd"] as? String,
-           cmd == "lookup",
-           let domain = messageDict["domain"] as? String
-        {
-            os_log(.default, "[Lookup] Performing DNS lookup for: %{public}@", domain)
-            if let ip = lookupDomain(domain) {
-                os_log(.default, "[Lookup] Lookup success: %{public}@ -> %{public}@", domain, ip)
-                responseMessage = ["ip": ip]
-            } else {
-                os_log(.error, "[Lookup] Lookup failed for: %{public}@", domain)
+           messageDict["cmd"] as? String == "lookup",
+           let domain = messageDict["domain"] as? String {
+            let addresses = lookupDomain(domain)
+            if addresses.isEmpty {
+                os_log(.error, "[Request] Lookup failed for %{public}@", domain)
                 responseMessage = ["error": "DNS lookup failed"]
+            } else {
+                os_log(.debug, "[Request] Lookup succeeded for %{public}@", domain)
+                responseMessage = ["addresses": addresses]
             }
         } else {
-            os_log(.default, "[Begin] Echoing message back to sender")
+            os_log(.debug, "[Request] Echoing message")
             responseMessage = ["echo": message ?? ""]
         }
-
+        
         let response = NSExtensionItem()
         if #available(iOS 15.0, macOS 11.0, *) {
             response.userInfo = [SFExtensionMessageKey: responseMessage]
         } else {
             response.userInfo = ["message": responseMessage]
         }
-
-        os_log(.default, "[Begin] Completing request with response message")
+        
+        os_log(.debug, "[Request] Completing")
         context.completeRequest(returningItems: [response], completionHandler: nil)
     }
 }
