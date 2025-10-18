@@ -36,24 +36,21 @@ for file in "${FILES[@]}"; do
   sed -i '' "/${escaped_file},/d" "$PROJECT_FILE"
 done
 
-# Build the insert text
-INSERT_TEXT=""
+# Add files one at a time to iOS extension
 for file in "${FILES[@]}"; do
-  INSERT_TEXT="${INSERT_TEXT}\\
-				${file},"
+  sed -i '' '/B2C2F82F2EA2ACB90051EEFB.*Shared.*Extension.*iOS/,/target = B2C2F7ED2EA2ACB90051EEFB/ {
+    /DNSResolver.swift,/a\
+				'"${file}"',
+  }' "$PROJECT_FILE"
 done
 
-# Add to iOS extension
-sed -i '' '/B2C2F82F2EA2ACB90051EEFB.*Shared.*Extension.*iOS/,/target = B2C2F7ED2EA2ACB90051EEFB/ {
-  /DNSResolver.swift,/a\
-'"${INSERT_TEXT}"'
-}' "$PROJECT_FILE"
-
-# Add to macOS extension
-sed -i '' '/B2C2F8302EA2ACB90051EEFB.*Shared.*Extension.*macOS/,/target = B2C2F7F72EA2ACB90051EEFB/ {
-  /DNSResolver.swift,/a\
-'"${INSERT_TEXT}"'
-}' "$PROJECT_FILE"
+# Add files one at a time to macOS extension
+for file in "${FILES[@]}"; do
+  sed -i '' '/B2C2F8302EA2ACB90051EEFB.*Shared.*Extension.*macOS/,/target = B2C2F7F72EA2ACB90051EEFB/ {
+    /DNSResolver.swift,/a\
+				'"${file}"',
+  }' "$PROJECT_FILE"
+done
 
 echo "✅ All Resources files added to membershipExceptions (no duplicates)"
 echo "Backup: $PROJECT_FILE.backup"

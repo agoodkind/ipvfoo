@@ -47,41 +47,71 @@ struct DNSResolver {
     ]
 
     // Perform DNS lookup - returns addresses with version (v4/v6)
-    static func lookupDomain(_ domain: String, logger: ((String) -> Void)? = nil) async -> LookupSummary {
+    static func lookupDomain(
+        _ domain: String,
+        logger: ((String) -> Void)? = nil
+    ) async -> LookupSummary {
         logger?("[DNS] lookupDomain start domain=\(domain)")
 
         // Domains that are already literal IP addresses bypass DNS.
         if IPv4Address(domain) != nil {
-            return LookupSummary(addresses: [AddressResult(address: domain, version: "v4")], tcpVerifiedAddress: nil)
+            return LookupSummary(
+                addresses: [AddressResult(address: domain, version: "v4")],
+                tcpVerifiedAddress: nil
+            )
         }
         if IPv6Address(domain) != nil {
-            return LookupSummary(addresses: [AddressResult(address: domain, version: "v6")], tcpVerifiedAddress: nil)
+            return LookupSummary(
+                addresses: [AddressResult(address: domain, version: "v6")],
+                tcpVerifiedAddress: nil
+            )
         }
 
         let addresses = await resolveHostname(domain, logger: logger)
         let localState = localAddressState(logger: logger)
-        let sorted = sortAddressesByRFC6724(addresses, localState: localState, logger: logger)
-        logger?("[DNS] Applied RFC 6724 address selection count=\(sorted.count)")
+        let sorted = sortAddressesByRFC6724(
+            addresses,
+            localState: localState,
+            logger: logger
+        )
+        logger?(
+            "[DNS] Applied RFC 6724 address selection count=\(sorted.count)"
+        )
         for (index, entry) in sorted.enumerated() {
-            logger?("[DNS] result[\(index)] address=\(entry.address) version=\(entry.version)")
+            logger?(
+                "[DNS] result[\(index)] address=\(entry.address) version=\(entry.version)"
+            )
         }
 
-        // Opportunistically open a TCP connection so we can log which address the
-        // OS ultimately uses. This helps debug precedence mismatches.
+        // Opportunistically open a TCP connection so we can use what OS ultimately uses.
         var verifiedAddress: String?
         if let best = sorted.first {
-            verifiedAddress = await verifyTcpConnection(domain: domain, port: 443, logger: logger)
+            verifiedAddress = await verifyTcpConnection(
+                domain: domain,
+                port: 443,
+                logger: logger
+            )
             if let verified = verifiedAddress {
                 let match = verified == best.address
-                logger?("[DNS] TCP verification remoteAddress=\(verified) matchesBest=\(match)")
+                logger?(
+                    "[DNS] TCP verification remoteAddress=\(verified) matchesBest=\(match)"
+                )
             } else {
-                logger?("[DNS] TCP verification unavailable for domain=\(domain)")
+                logger?(
+                    "[DNS] TCP verification unavailable for domain=\(domain)"
+                )
             }
         }
-        return LookupSummary(addresses: sorted, tcpVerifiedAddress: verifiedAddress)
+        return LookupSummary(
+            addresses: sorted,
+            tcpVerifiedAddress: verifiedAddress
+        )
     }
 
-    static func resolveHostname(_ hostname: String, logger: ((String) -> Void)? = nil) async -> [AddressResult] {
+    static func resolveHostname(
+        _ hostname: String,
+        logger: ((String) -> Void)? = nil
+    ) async -> [AddressResult] {
         await withCheckedContinuation { continuation in
             DispatchQueue.global().async {
                 var hints = addrinfo()
@@ -94,7 +124,9 @@ struct DNSResolver {
 
                 guard status == 0, let head = result else {
                     let errStr = String(cString: gai_strerror(status))
-                    logger?("[DNS] getaddrinfo failed domain=\(hostname) error=\(status) message=\(errStr)")
+                    logger?(
+                        "[DNS] getaddrinfo failed domain=\(hostname) error=\(status) message=\(errStr)"
+                    )
                     continuation.resume(returning: [])
                     return
                 }
@@ -112,22 +144,47 @@ struct DNSResolver {
                     var host = [CChar](repeating: 0, count: Int(NI_MAXHOST))
                     let addrLen = socklen_t(info.pointee.ai_addrlen)
 
-                    guard getnameinfo(addr, addrLen, &host, socklen_t(host.count), nil, 0, NI_NUMERICHOST) == 0 else {
-                        logger?("[DNS] getnameinfo failed index addressFamily=\(info.pointee.ai_family)")
+                    guard
+                        getnameinfo(
+                            addr,
+                            addrLen,
+                            &host,
+                            socklen_t(host.count),
+                            nil,
+                            0,
+                            NI_NUMERICHOST
+                        ) == 0
+                    else {
+                        logger?(
+                            "[DNS] getnameinfo failed index addressFamily=\(info.pointee.ai_family)"
+                        )
                         continue
                     }
 
-                    let version = info.pointee.ai_family == AF_INET ? "v4" : "v6"
+                    let version =
+                        info.pointee.ai_family == AF_INET ? "v4" : "v6"
                     let stringAddress = String(cString: host)
-                    logger?("[DNS] resolved raw address=\(stringAddress) version=\(version)")
-                    addresses.append(AddressResult(address: stringAddress, version: version))
+                    logger?(
+                        "[DNS] resolved raw address=\(stringAddress) version=\(version)"
+                    )
+                    addresses.append(
+                        AddressResult(address: stringAddress, version: version)
+                    )
                 }
 
-                logger?("[DNS] resolveHostname finished domain=\(hostname) count=\(addresses.count)")
+                logger?(
+                    "[DNS] resolveHostname finished domain=\(hostname) count=\(addresses.count)"
+                )
                 for (idx, entry) in addresses.enumerated() {
-                    logger?("[DNS] resolveHostname[\(idx)] address=\(entry.address) version=\(entry.version)")
+                    logger?(
+                        "[DNS] resolveHostname[\(idx)] address=\(entry.address) version=\(entry.version)"
+                    )
                 }
-                let sorted = sortAddressesByRFC6724(addresses, localState: localAddressState(logger: logger), logger: logger)
+                let sorted = sortAddressesByRFC6724(
+                    addresses,
+                    localState: localAddressState(logger: logger),
+                    logger: logger
+                )
                 logger?("[DNS] resolveHostname sorted count=\(sorted.count)")
                 continuation.resume(returning: sorted)
             }
@@ -138,7 +195,11 @@ struct DNSResolver {
 
     /// Compute precedence/label for an address after applying RFC 6724 default
     /// policy table and adjusting based on local connectivity.
-    static func getPolicyEntry(for address: String, localState: LocalAddressState, logger: ((String) -> Void)? = nil) -> (precedence: Int, label: Int) {
+    static func getPolicyEntry(
+        for address: String,
+        localState: LocalAddressState,
+        logger: ((String) -> Void)? = nil
+    ) -> (precedence: Int, label: Int) {
         guard let addr = IPv6Address(address) ?? mapIPv4ToIPv6(address) else {
             return (precedence: 40, label: 1)
         }
@@ -160,24 +221,32 @@ struct DNSResolver {
                 logger?("[DNS] policy adjust IPv4 disabled address=\(address)")
             } else if !localState.hasGlobalIPv6 && localState.hasULAIPv6 {
                 precedence += 5
-                logger?("[DNS] policy boost IPv4 due to ULA-only environment address=\(address)")
+                logger?(
+                    "[DNS] policy boost IPv4 due to ULA-only environment address=\(address)"
+                )
             }
         } else if matchesPrefix(address: addr, prefix: "::/0") {
             if !localState.hasGlobalIPv6 {
                 precedence -= 15
-                logger?("[DNS] policy penalize global IPv6 (no global source) address=\(address)")
+                logger?(
+                    "[DNS] policy penalize global IPv6 (no global source) address=\(address)"
+                )
             }
         } else if matchesPrefix(address: addr, prefix: "fc00::/7") {
             if !localState.hasULAIPv6 {
                 precedence = 0
-                logger?("[DNS] policy drop ULA (not available) address=\(address)")
+                logger?(
+                    "[DNS] policy drop ULA (not available) address=\(address)"
+                )
             } else if localState.hasIPv4 && !localState.hasGlobalIPv6 {
                 precedence -= 5
                 logger?("[DNS] policy penalize ULA vs IPv4 address=\(address)")
             }
         }
 
-        logger?("[DNS] policy result address=\(address) precedence=\(precedence) label=\(label)")
+        logger?(
+            "[DNS] policy result address=\(address) precedence=\(precedence) label=\(label)"
+        )
         return (precedence: max(precedence, 0), label: label)
     }
 
@@ -189,8 +258,8 @@ struct DNSResolver {
     static func matchesPrefix(address: IPv6Address, prefix: String) -> Bool {
         let components = prefix.split(separator: "/")
         guard components.count == 2,
-              let prefixAddr = IPv6Address(String(components[0])),
-              let prefixLen = Int(components[1])
+            let prefixAddr = IPv6Address(String(components[0])),
+            let prefixLen = Int(components[1])
         else { return false }
 
         let addrBytes = address.rawValue
@@ -205,7 +274,8 @@ struct DNSResolver {
 
         if remainingBits > 0 {
             let mask = UInt8(0xFF << (8 - remainingBits))
-            if (addrBytes[fullBytes] & mask) != (prefixBytes[fullBytes] & mask) {
+            if (addrBytes[fullBytes] & mask) != (prefixBytes[fullBytes] & mask)
+            {
                 return false
             }
         }
@@ -214,12 +284,26 @@ struct DNSResolver {
     }
 
     /// Sort the set of candidate addresses using RFC 6724 rules with local link awareness.
-    static func sortAddressesByRFC6724(_ addresses: [AddressResult], localState: LocalAddressState, logger: ((String) -> Void)? = nil) -> [AddressResult] {
+    static func sortAddressesByRFC6724(
+        _ addresses: [AddressResult],
+        localState: LocalAddressState,
+        logger: ((String) -> Void)? = nil
+    ) -> [AddressResult] {
         addresses.sorted { lhs, rhs in
-            let policy1 = getPolicyEntry(for: lhs.address, localState: localState, logger: logger)
-            let policy2 = getPolicyEntry(for: rhs.address, localState: localState, logger: logger)
+            let policy1 = getPolicyEntry(
+                for: lhs.address,
+                localState: localState,
+                logger: logger
+            )
+            let policy2 = getPolicyEntry(
+                for: rhs.address,
+                localState: localState,
+                logger: logger
+            )
 
-            logger?("[DNS] sort compare lhs=\(lhs.address) prec=\(policy1.precedence) label=\(policy1.label) rhs=\(rhs.address) prec=\(policy2.precedence) label=\(policy2.label)")
+            logger?(
+                "[DNS] sort compare lhs=\(lhs.address) prec=\(policy1.precedence) label=\(policy1.label) rhs=\(rhs.address) prec=\(policy2.precedence) label=\(policy2.label)"
+            )
 
             if policy1.label != policy2.label {
                 return policy1.label < policy2.label
@@ -229,8 +313,12 @@ struct DNSResolver {
                 return policy1.precedence > policy2.precedence
             }
 
-            let isNative1 = IPv6Address(lhs.address) != nil && !lhs.address.contains("::ffff:")
-            let isNative2 = IPv6Address(rhs.address) != nil && !rhs.address.contains("::ffff:")
+            let isNative1 =
+                IPv6Address(lhs.address) != nil
+                && !lhs.address.contains("::ffff:")
+            let isNative2 =
+                IPv6Address(rhs.address) != nil
+                && !rhs.address.contains("::ffff:")
 
             if isNative1 != isNative2 {
                 return isNative1
@@ -241,15 +329,22 @@ struct DNSResolver {
     }
 
     /// Attempt an actual TCP connection to confirm which address the system ultimately uses.
-    /// Helps validate ordering/logging, but is best-effort only.
-    static func verifyTcpConnection(domain: String, port: UInt16, logger: ((String) -> Void)? = nil) async -> String? {
+    static func verifyTcpConnection(
+        domain: String,
+        port: UInt16,
+        logger: ((String) -> Void)? = nil
+    ) async -> String? {
         guard let nwPort = NWEndpoint.Port(rawValue: port) else {
             logger?("[DNS] TCP verification invalid port=\(port)")
             return nil
         }
 
         return await withCheckedContinuation { continuation in
-            let connection = NWConnection(host: NWEndpoint.Host(domain), port: nwPort, using: .tcp)
+            let connection = NWConnection(
+                host: NWEndpoint.Host(domain),
+                port: nwPort,
+                using: .tcp
+            )
             var resumed = false
 
             @Sendable func finish(_ value: String?) {
@@ -264,21 +359,26 @@ struct DNSResolver {
                 case .ready:
                     var ip: String?
                     if let endpoint = connection.currentPath?.remoteEndpoint,
-                       case let .hostPort(host, _) = endpoint {
+                        case .hostPort(let host, _) = endpoint
+                    {
                         switch host {
-                        case let .ipv4(addr):
+                        case .ipv4(let addr):
                             ip = addr.debugDescription
-                        case let .ipv6(addr):
+                        case .ipv6(let addr):
                             ip = addr.debugDescription
                         default:
                             break
                         }
                     }
-                    logger?("[DNS] TCP ready remote=\(ip ?? "unknown") domain=\(domain)")
+                    logger?(
+                        "[DNS] TCP ready remote=\(ip ?? "unknown") domain=\(domain)"
+                    )
                     connection.cancel()
                     finish(ip)
                 case .failed(let error):
-                    logger?("[DNS] TCP verification failed domain=\(domain) error=\(error.localizedDescription)")
+                    logger?(
+                        "[DNS] TCP verification failed domain=\(domain) error=\(error.localizedDescription)"
+                    )
                     connection.cancel()
                     finish(nil)
                 case .cancelled:
@@ -295,7 +395,9 @@ struct DNSResolver {
     /// Inspect local interfaces using getifaddrs to detect whether the host has
     /// routable IPv4, global IPv6, or ULA-only IPv6 connectivity. Link-local
     /// addresses are ignored because they cannot reach external destinations.
-    static func localAddressState(logger: ((String) -> Void)? = nil) -> LocalAddressState {
+    static func localAddressState(logger: ((String) -> Void)? = nil)
+        -> LocalAddressState
+    {
         var hasIPv4 = false
         var hasGlobalIPv6 = false
         var hasULAIPv6 = false
@@ -311,12 +413,17 @@ struct DNSResolver {
                 case AF_INET:
                     hasIPv4 = true
                 case AF_INET6:
-                    let sin6 = addr.withMemoryRebound(to: sockaddr_in6.self, capacity: 1) { $0.pointee }
+                    let sin6 = addr.withMemoryRebound(
+                        to: sockaddr_in6.self,
+                        capacity: 1
+                    ) { $0.pointee }
                     var address = sin6.sin6_addr
                     let bytes = withUnsafeBytes(of: &address) { Array($0) }
 
                     // Ignore link-local addresses (fe80::/10) and scoped entries.
-                    if (bytes[0] == 0xfe && (bytes[1] & 0xc0) == 0x80) || sin6.sin6_scope_id != 0 {
+                    if (bytes[0] == 0xfe && (bytes[1] & 0xc0) == 0x80)
+                        || sin6.sin6_scope_id != 0
+                    {
                         continue
                     }
 
@@ -332,8 +439,13 @@ struct DNSResolver {
             freeifaddrs(first)
         }
 
-        logger?("[DNS] Local address state: IPv4=\(hasIPv4) IPv6Global=\(hasGlobalIPv6) IPv6ULA=\(hasULAIPv6)")
-        return LocalAddressState(hasIPv4: hasIPv4, hasGlobalIPv6: hasGlobalIPv6, hasULAIPv6: hasULAIPv6)
+        logger?(
+            "[DNS] Local address state: IPv4=\(hasIPv4) IPv6Global=\(hasGlobalIPv6) IPv6ULA=\(hasULAIPv6)"
+        )
+        return LocalAddressState(
+            hasIPv4: hasIPv4,
+            hasGlobalIPv6: hasGlobalIPv6,
+            hasULAIPv6: hasULAIPv6
+        )
     }
 }
-
