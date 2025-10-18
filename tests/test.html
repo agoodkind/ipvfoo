@@ -52,12 +52,24 @@
         .status {
             color: #666;
             margin-left: 28px;
+            min-height: 1.2em;
         }
         .success {
             color: green;
         }
         .error {
             color: red;
+        }
+        @keyframes flash-yellow {
+            0% {
+                background-color: rgba(255, 255, 0, 0.4);
+            }
+            100% {
+                background-color: transparent;
+            }
+        }
+        .flash {
+            animation: flash-yellow 0.6s ease-out;
         }
         .controls {
             margin-bottom: 20px;
@@ -88,7 +100,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useCallback } = React
+        const { useState, useEffect, useCallback, useRef } = React
 
         const DOMAINS = [
             "https://ipv4.google.com",
@@ -117,6 +129,31 @@
         }
 
         function DomainTest({ domain, enabled, onToggle, status, onTest }) {
+            const prevMessageRef = useRef(status.message)
+            const [flashParts, setFlashParts] = useState(() => 
+                status.message.split(/(\s+|[()]+)/).map(text => ({ text, isDifferent: false }))
+            )
+            const [flashKey, setFlashKey] = useState(0)
+
+            useEffect(() => {
+                const prevMessage = prevMessageRef.current
+                const currentMessage = status.message
+
+                if (prevMessage !== currentMessage) {
+                    const words = currentMessage.split(/(\s+|[()]+)/)
+                    const prevWords = prevMessage.split(/(\s+|[()]+)/)
+
+                    const parts = words.map((word, i) => ({
+                        text: word,
+                        isDifferent: word !== prevWords[i]
+                    }))
+
+                    setFlashParts(parts)
+                    setFlashKey(prev => prev + 1)
+                    prevMessageRef.current = currentMessage
+                }
+            }, [status.message])
+
             const handleRowClick = () => {
                 onToggle(domain)
             }
@@ -147,7 +184,11 @@
                         </label>
                     </div>
                     <div className={`status ${status.className}`}>
-                        {status.message}
+                        {flashParts.map((part, i) => (
+                            <span key={`${i}-${flashKey}`} className={part.isDifferent ? 'flash' : ''}>
+                                {part.text}
+                            </span>
+                        ))}
                     </div>
                 </div>
             )
