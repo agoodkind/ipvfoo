@@ -87,6 +87,7 @@
     async function runTests() {
         stopRequested = false
         document.getElementById("start_test").innerHTML = "Stop Test"
+        document.getElementById("pause_time").disabled = true
         
         while (!stopRequested) {
             const domain = getRandomDomain()
@@ -98,6 +99,7 @@
     function stopTest() {
         stopRequested = true
         document.getElementById("start_test").innerHTML = "Start Test"
+        document.getElementById("pause_time").disabled = false
     }
 
     function toggleTest() {
@@ -118,6 +120,16 @@
                 <div id="result-${domain}" class="status">Not tested</div>
             `
             container.appendChild(div)
+        })
+
+        const pauseTimeInput = document.getElementById("pause_time")
+        const savedPauseTime = localStorage.getItem("pauseTime")
+        if (savedPauseTime !== null) {
+            pauseTimeInput.value = savedPauseTime
+        }
+
+        pauseTimeInput.addEventListener("input", function () {
+            localStorage.setItem("pauseTime", pauseTimeInput.value)
         })
     }
 </script>

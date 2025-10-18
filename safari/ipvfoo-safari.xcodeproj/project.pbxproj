@@ -154,6 +154,8 @@
 
 
 
+
+
 				SafariWebExtensionHandler.swift,
 			);
 			target = B2C2F7ED2EA2ACB90051EEFB /* ipvfoo-safari Extension (iOS) */;
@@ -183,6 +185,8 @@
 				Resources/options.html,
 				Resources/popup.html,
 				Resources/popup.js,
+
+
 
 
 

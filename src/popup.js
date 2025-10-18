@@ -23,8 +23,7 @@ import cachedArrowUrl from "./assets/cached_arrow.png";
 import snipUrl from "./assets/snip.png";
 import tableBgUrl from "./assets/1x1_808080.png";
 
-const ALL_URLS = "<all_urls>";
-const DEBUG = true;
+const ALL_URLS = '<all_urls>'
 
 // Snip domains longer than this, to avoid horizontal scrolling.
 const LONG_DOMAIN = 50;

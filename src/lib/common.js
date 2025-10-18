@@ -22,7 +22,6 @@ import sprites32Url from "../assets/sprites32.png";
 
 export {formatIPv6};
 
-export const DEBUG = true;
 export const IS_MOBILE = /\bMobile\b/.test(navigator.userAgent);
 
 // Flags are bitwise-OR'd across all connections to a domain.

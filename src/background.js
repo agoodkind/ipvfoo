@@ -882,9 +882,6 @@ class Popups {
     if (!tuple) {
       return
     }
-
-    // Build [domain, addr, version, flags] tuple, for a popup.
-
     VERBOSE4: console.log(
       'pushOne',
       'tabId',
