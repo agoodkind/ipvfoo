@@ -84,3 +84,5 @@ dist/
 .DS_Store
 # Xcode build output
 safari/Shared (Extension)/Resources
+safari/open-safari-debugger.applescript
+safari/open-safari-debugger.sh

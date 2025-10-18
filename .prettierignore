@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+safari/build
+*.xcodeproj
+*.xcworkspace
+*.xcassets
+pnpm-lock.yaml
+

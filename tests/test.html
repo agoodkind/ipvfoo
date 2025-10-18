@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+    body {
+        font-family: monospace;
+        padding: 20px;
+    }
+    .domain-test {
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    .domain-name {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .status {
+        color: #666;
+    }
+    .success {
+        color: green;
+    }
+    .error {
+        color: red;
+    }
+    .controls {
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .controls input {
+        padding: 5px;
+        width: 80px;
+    }
+</style>
+<script>
+    const domains = [
+        "https://ipv4.google.com",
+        "https://ipv6.google.com",
+        "https://google.com",
+        "http://localhost:8080/ping",
+        "http://127.0.0.1:8080/ping",
+        "http://[::1]:8080/ping",
+        "http://[::ffff:127.0.0.1]:8080/ping",
+        "https://ipv4.icanhazip.com",
+        "https://ipv6.icanhazip.com",
+        "https://icanhazip.com"
+    ]
+
+    let stopRequested = false
+
+    function getRandomDomain() {
+        return domains[Math.floor(Math.random() * domains.length)]
+    }
+
+    function getPauseTime() {
+        return parseInt(document.getElementById("pause_time").value) || 100
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms))
+    }
+
+    async function testDomain(domain) {
+        const element = document.getElementById(`result-${domain}`)
+        if (!element) return
+
+        try {
+            element.className = "status"
+            element.innerHTML = "Testing..."
+            
+            const startTime = Date.now()
+            const response = await fetch(domain, { method: "HEAD", mode: "no-cors" })
+            const duration = Date.now() - startTime
+            
+            element.className = "status success"
+            element.innerHTML = `Reachable (${duration}ms)`
+        } catch (error) {
+            element.className = "status error"
+            element.innerHTML = `Error: ${error.message}`
+        }
+    }
+
+    async function runTests() {
+        stopRequested = false
+        document.getElementById("start_test").innerHTML = "Stop Test"
+        
+        while (!stopRequested) {
+            const domain = getRandomDomain()
+            await testDomain(domain)
+            await sleep(getPauseTime())
+        }
+    }
+
+    function stopTest() {
+        stopRequested = true
+        document.getElementById("start_test").innerHTML = "Start Test"
+    }
+
+    function toggleTest() {
+        if (stopRequested || document.getElementById("start_test").innerHTML === "Start Test") {
+            runTests()
+        } else {
+            stopTest()
+        }
+    }
+
+    window.onload = function() {
+        const container = document.getElementById("test_results")
+        domains.forEach(domain => {
+            const div = document.createElement("div")
+            div.className = "domain-test"
+            div.innerHTML = `
+                <div class="domain-name">${domain}</div>
+                <div id="result-${domain}" class="status">Not tested</div>
+            `
+            container.appendChild(div)
+        })
+    }
+</script>
+
+</head>
+<body>
+    <h2>Domain Connectivity Test</h2>
+    <div class="controls">
+        <button id="start_test" onclick="toggleTest()">Start Test</button>
+        <label for="pause_time">Pause time (ms):</label>
+        <input type="number" id="pause_time" value="100" min="0" step="10">
+    </div>
+    <div id="test_results"></div>
+</body>
+</html>

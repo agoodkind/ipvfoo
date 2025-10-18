@@ -98,7 +98,7 @@ export const lookupDomainNative = async (domain) => {
 
   const addresses = await doNativeLookup(domain);
 
-  let address = addresses.tcpAddress;
+  let address = addresses?.tcpAddress ?? null;
 
   if (address) {
     dnsCache.set(domain, {

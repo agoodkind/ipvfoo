@@ -12,7 +12,9 @@
     "watch": "node build.mjs --watch",
     "watch:firefox": "node build.mjs --watch --targets firefox",
     "watch:chrome": "node build.mjs --watch --targets chrome",
-    "watch:safari": "node build.mjs --watch --targets safari"
+    "watch:safari": "node build.mjs --watch --targets safari",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [],
   "author": "",
@@ -24,6 +26,7 @@
     "@types/firefox-webext-browser": "^143.0.0",
     "@types/node": "^24.8.1",
     "@types/web": "^0.0.280",
-    "esbuild": "^0.25.11"
+    "esbuild": "^0.25.11",
+    "prettier": "^3.6.2"
   }
 }
