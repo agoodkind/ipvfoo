@@ -1,5 +1,3 @@
-import { debugLog } from "./logger";
-
 /**
  * Looks up a domain using the native DNS resolver.
  * @param {string} domain - The domain to look up.
@@ -24,7 +22,7 @@ export const doNativeLookup = async (domain) => {
       return result;
     }
   } catch (error) {
-    debugLog("Native lookup error:", error);
+    VERBOSE1: console.error("Native lookup error:", error);
     return null;
   }
 };
@@ -65,7 +63,7 @@ const checkIPv6Connectivity = async () => {
   }
 
   ipv6ConnectivityCache.lastCheck = now;
-  debugLog("IPv6 connectivity check:", ipv6ConnectivityCache.hasIPv6);
+  VERBOSE1: console.log("IPv6 connectivity check:", ipv6ConnectivityCache.hasIPv6);
   return ipv6ConnectivityCache.hasIPv6;
 };
 
@@ -79,7 +77,7 @@ setInterval(() => {
   for (const [key, entry] of dnsCache.entries()) {
     if (now - entry.timestamp >= DNS_CACHE_TTL) {
       dnsCache.delete(key);
-      debugLog("DOH cache entry expired for", key);
+      VERBOSE3: console.log("DOH cache entry expired for", key);
     }
   }
 }, DNS_CACHE_TTL);
@@ -94,7 +92,7 @@ export const lookupDomainNative = async (domain) => {
   // Check cache first
   const cacheEntry = dnsCache.get(domain);
   if (cacheEntry && now - cacheEntry.timestamp < DNS_CACHE_TTL) {
-    debugLog("cache hit for", domain);
+    VERBOSE3: console.log("cache hit for", domain);
     return cacheEntry.ip;
   }
 
@@ -107,7 +105,7 @@ export const lookupDomainNative = async (domain) => {
       ip: address,
       timestamp: Date.now(),
     });
-    debugLog("result cached for", "domain=" + domain, "address=" + address);
+    VERBOSE3: console.log("result cached for", "domain=" + domain, "address=" + address);
   }
 
   return address;

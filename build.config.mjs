@@ -29,10 +29,14 @@ export const entryPoints = [
     in: "src/popup.js",
     out: "popup",
   },
+  {
+    in: "src/detectdarkmode.js",
+    out: "detectdarkmode",
+  },
 ]
 
 export const staticAssets = {
   dirs: ["assets"],
-  files: ["options.html", "popup.html"],
+  files: ["options.html", "popup.html", "detectdarkmode.html"],
 }
 

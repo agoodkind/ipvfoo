@@ -29,7 +29,7 @@ import {
   isSafari
 } from "./lib/common.js";
 
-import {lookupDomainNative} from "./lib/safari.js";
+import { lookupDomainNative } from "./lib/safari.js";
 import { parseIP } from "lib/iputil.js";
 
 /*
@@ -87,7 +87,18 @@ const NAME_VERSION = (() => {
   return `${m.name} v${m.version}`;
 })();
 
+if (isSafari) {
+  VERBOSE3: console.log("Safari detected");
+  chrome.runtime.onMessage.addListener((msg) => {
+    if (msg.cmd == "relay" || msg.cmd == "popupLoaded") {
+      VERBOSE3: console.log("relay", ...msg);
+    }
+  });
 
+  setTimeout(() => {
+    // chrome..sendMessage({cmd: "backgroundLoaded"});
+  }, 1000);
+}
 
 // Log errors from async listeners, because otherwise Firefox hides them
 // in the global console.
@@ -116,7 +127,7 @@ function parseUrl(url) {
         break;
       case "wss:":
         ssl = true;
-        // fallthrough
+      // fallthrough
       case "ws:":
         ws = true;
         break;
@@ -130,18 +141,18 @@ function updateNAT64(domain, addr) {
     return;
   }
   const packed = parseIP(addr);
-  if (packed.length != 128/4) {
+  if (packed.length != 128 / 4) {
     return;  // not an IPv6 address
   }
   // Heuristic: Don't consider this a NAT64 prefix if the embedded
   // IPv4 address falls under 0.x.x.x/8.  This filters out cases where all
   // traffic is proxied to the same address, assuming that most proxies
   // have a low-numbered suffix like ::1.
-  if (packed.substr(96/4, 2) == '00') {
+  if (packed.substr(96 / 4, 2) == '00') {
     return;
   }
   // If this is a new prefix, the watchOptions callback will handle it.
-  addPackedNAT64(packed.slice(0, 96/4));
+  addPackedNAT64(packed.slice(0, 96 / 4));
 }
 
 // Magic object that calls action and/or pageAction. We want an icon in the
@@ -209,8 +220,8 @@ class SaveableEntry {
       if (this.#savedJSON == j) {
         return;
       }
-      VERBOSE3: console.log("saving", key, j);
-      await chrome.storage.session.set({[key]: j});
+      VERBOSE3: console.log("saving", key, JSON.parse(j));
+      await chrome.storage.session.set({ [key]: j });
       this.#savedJSON = j;
     }
   }
@@ -252,7 +263,7 @@ class SaveableMap {
     let id;
     try {
       id = this.validateId(suffix);
-    } catch(err) {
+    } catch (err) {
       console.error(err);
       return false;
     }
@@ -319,7 +330,7 @@ class TabInfo extends SaveableEntry {
   tooYoungToDie() {
     // Spare new tabs from garbage collection for a minute or so.
     return (this.#state == TAB_BIRTH &&
-            this.born >= Date.now() - 60*SECONDS);
+      this.born >= Date.now() - 60 * SECONDS);
   }
 
   makeAlive() {
@@ -389,7 +400,7 @@ class TabInfo extends SaveableEntry {
         return;
       }
       d = this.domains[domain] =
-          new DomainInfo(this, domain, addr || "(lost)", flags);
+        new DomainInfo(this, domain, addr || "(lost)", flags);
       d.countUp();
     } else {
       const oldAddr = d.addr;
@@ -628,7 +639,7 @@ function ipCacheGrew() {
   ipCacheSize = flat.length;  // redundant
   for (const cachedAddr of flat) {
     ipCache.remove(cachedAddr.id());
-    if (--ipCacheSize <= IP_CACHE_LIMIT/2) {
+    if (--ipCacheSize <= IP_CACHE_LIMIT / 2) {
       break;
     }
   }
@@ -666,10 +677,15 @@ function lookupOriginMap(origin) {
 if (typeof window !== 'undefined' && window.matchMedia) {
   // Firefox can detect dark mode from the background page.
   (async () => {
+    VERBOSE2: console.log("detectdarkmode");
     await optionsReady;
+    VERBOSE2: console.log("optionsReady");
     const query = window.matchMedia('(prefers-color-scheme: dark)');
+    VERBOSE2: console.log("query", query);
     setColorIsDarkMode(REGULAR_COLOR, query.matches);
+    VERBOSE2: console.log("setColorIsDarkMode", query.matches);
     query.addEventListener("change", (event) => {
+      VERBOSE2: console.log("change", event);
       setColorIsDarkMode(REGULAR_COLOR, event.matches);
     });
   })();
@@ -678,6 +694,8 @@ if (typeof window !== 'undefined' && window.matchMedia) {
   chrome.runtime.onMessage.addListener((message) => {
     VERBOSE2: console.log("onMessage", message);
     if (message.hasOwnProperty("darkModeOffscreen")) {
+      VERBOSE2: console.log("onMessage", message);
+      VERBOSE2: console.log("setColorIsDarkMode", message.darkModeOffscreen);
       setColorIsDarkMode(REGULAR_COLOR, message.darkModeOffscreen);
     }
   });
@@ -686,7 +704,7 @@ if (typeof window !== 'undefined' && window.matchMedia) {
     await optionsReady;
     try {
       await chrome.offscreen.createDocument({
-        url: "assets/detectdarkmode.html",
+        url: "detectdarkmode.html",
         reasons: ['MATCH_MEDIA'],
         justification: 'detect light/dark mode for icon colors',
       });
@@ -742,33 +760,54 @@ const storageReady = initStorage();
 // This class keeps track of the visible popup windows,
 // and streams changes to them as they occur.
 class Popups {
+  /** @type {Record<string, chrome.runtime.Port>} */
   ports = newMap();  // tabId -> Port
 
+  /**
+   * @param {string} tabId
+   * @param {object} data
+   */
   sendMessage(tabId, data) {
     try {
       this.ports[tabId]?.postMessage(data);
     } catch (err) {
       VERBOSE2: console.error("sendMessage", "port", tabId, err);
     }
-    if (isSafari) {
-      chrome.tabs.sendMessage(parseInt(tabId, 10), data).catch((err) => {
-        VERBOSE2: console.error("sendMessage","tab", tabId, err);
-      });
-      chrome.runtime.sendMessage({tabId, ...data}).catch((err) => {
-        VERBOSE2: console.error("sendMessage", "runtime", tabId, err);
-      });
-    }
   };
 
+  /**
+   * @param {string} tabId
+   * @param {any} msg
+   */
+  onMessage(tabId, msg) {
+    VERBOSE3: console.log(
+      "Popups.onMessage",
+      "tabId", tabId,
+      "cmd", msg.cmd,
+      "originalMsg", msg.msg,
+    );
+  }
+
   // Attach a new popup window, and start sending it updates.
+  /**
+   * @param {chrome.runtime.Port} port
+   */
   attachPort(port) {
     const tabId = port.name;
     this.ports[tabId] = port;
+    VERBOSE3: console.log("attachPort", "ports", Object.keys(this.ports));
+    VERBOSE3: port.onMessage.addListener((msg) => this.onMessage(tabId, msg));
     tabMap[tabId]?.pushAll();
   };
 
+  /**
+   * 
+   * @param {chrome.runtime.Port} port 
+   */
   detachPort(port) {
     const tabId = port.name;
+    VERBOSE3: port.onMessage.removeListener((msg) => this.onMessage(tabId, msg));
+    port.disconnect();
     delete this.ports[tabId];
   };
 
@@ -894,7 +933,7 @@ class TabTracker {
           this.#removeTab(tabId, "pollAllTabs");
         }
       }
-      await sleep(300*SECONDS);
+      await sleep(300 * SECONDS);
     }
   }
 
@@ -961,7 +1000,7 @@ chrome.webNavigation.onCommitted.addListener(wrap(async (details) => {
 // is hacky and inefficient, but the back-stabbing browser leaves me no choice.
 // This seems to fix http://crbug.com/124970 and some problems on Google+.
 chrome.tabs.onUpdated.addListener(wrap(async (tabId, changeInfo, tab) => {
-  VERBOSE2: console.log("tabs.oU", tabId);
+  VERBOSE4: console.log("tabs.oU", tabId);
   await storageReady;
   const tabInfo = tabMap[tabId];
   if (tabInfo) {
@@ -1025,7 +1064,7 @@ chrome.webRequest.onBeforeRequest.addListener(wrap(async (details) => {
 chrome.webRequest.onBeforeRedirect.addListener(wrap(async (details) => {
   await storageReady;
   if (!(details.type == "main_frame" ||
-        details.type == "outermost_frame")) {
+    details.type == "outermost_frame")) {
     return;
   }
   const requestInfo = requestMap[details.requestId];
@@ -1048,7 +1087,8 @@ chrome.webRequest.onBeforeRedirect.addListener(wrap(async (details) => {
 }), FILTER_ALL_URLS);
 
 chrome.webRequest.onResponseStarted.addListener(wrap(async (details) => {
-  VERBOSE2: console.log("wR.oRS", details?.tabId, details?.url, details);
+  VERBOSE2: !isSafari && console.log(
+    "wR.oRS", details?.tabId, details?.requestId, new URL(details?.url).hostname);
   await storageReady;
   const requestInfo = requestMap[details.requestId];
   if (!requestInfo) {
@@ -1079,6 +1119,8 @@ chrome.webRequest.onResponseStarted.addListener(wrap(async (details) => {
   // and respecting local DNS settings.
   if (!addr && isSafari) {
     addr = await lookupDomainNative(parsed.domain);
+   VERBOSE2: console.log(
+      "wR.oRS", details?.tabId, details?.requestId, parsed.domain, addr);
   }
 
   if (!fromCache) {
@@ -1167,9 +1209,9 @@ chrome.contextMenus?.onClicked.addListener((info, tab) => {
   const text = info.selectionText;
   if (IP4_CHARS.test(text) || IP6_CHARS.test(text)) {
     // bgp.he.net doesn't support dotted IPv6 addresses.
-    chrome.tabs.create({url: `https://bgp.he.net/ip/${reformatForNAT64(text, false)}`});
+    chrome.tabs.create({ url: `https://bgp.he.net/ip/${reformatForNAT64(text, false)}` });
   } else if (DNS_CHARS.test(text)) {
-    chrome.tabs.create({url: `https://bgp.he.net/dns/${text}`});
+    chrome.tabs.create({ url: `https://bgp.he.net/dns/${text}` });
   } else {
     // Malformed selection; shake the popup content.
     const tabId = /#(\d+)$/.exec(info.pageUrl);
@@ -1199,3 +1241,5 @@ watchOptions(async (optionsChanged) => {
     }
   }
 });
+
+VERBOSE3: console.log("background.js loaded");

@@ -174,8 +174,7 @@ async function buildBrowser(browserName, watch = false) {
 
   const outDir = resolve(__dirname, target.outDir)
 
-  // Clean and create output directory
-  await rm(outDir, { recursive: true, force: true })
+  // Create output directory
   await mkdir(outDir, { recursive: true })
 
   // Copy static assets first
@@ -248,7 +247,6 @@ async function main(argv = process.argv) {
   const program = new Command()
   program
     .name("build")
-    .version("1.0.0")
     .description("Build ipvfoo extension for multiple browsers")
     .option("-w, --watch", "Watch mode")
     .option(

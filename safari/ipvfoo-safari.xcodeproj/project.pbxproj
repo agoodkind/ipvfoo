@@ -54,6 +54,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A43882D42EA43A1A00F64985 /* build_js.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = build_js.sh; sourceTree = "<group>"; };
+		A43882D52EA43A1A00F64985 /* open-safari-debugger.applescript */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.applescript; path = "open-safari-debugger.applescript"; sourceTree = "<group>"; };
+		A43882D62EA43A1A00F64985 /* safari.xcfilelist */ = {isa = PBXFileReference; lastKnownFileType = text.xcfilelist; path = safari.xcfilelist; sourceTree = "<group>"; };
 		B2C2F7D12EA2ACB90051EEFB /* ipvfoo-safari.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ipvfoo-safari.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B2C2F7E32EA2ACB90051EEFB /* ipvfoo-safari.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ipvfoo-safari.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B2C2F7EE2EA2ACB90051EEFB /* ipvfoo-safari Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "ipvfoo-safari Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -115,24 +118,34 @@
 
 				Resources/assets/1x1_808080.png,
 				Resources/assets/cached_arrow.png,
-				Resources/assets/detectdarkmode.html,
-				Resources/assets/detectdarkmode.js,
 				Resources/assets/gray_lock.png,
 				Resources/assets/gray_schrodingers_lock.png,
 				Resources/assets/gray_unlock.png,
 				Resources/assets/icon128.png,
-				Resources/assets/icon16.png,
 				Resources/assets/icon16_transparent.png,
+				Resources/assets/icon16.png,
 				Resources/assets/serviceworker.png,
 				Resources/assets/snip.png,
 				Resources/assets/sprites16.png,
 				Resources/assets/sprites32.png,
 				Resources/assets/websocket.png,
 				Resources/background.js,
+				Resources/detectdarkmode.html,
+				Resources/detectdarkmode.js,
 				Resources/manifest.json,
 				Resources/options.html,
 				Resources/popup.html,
 				Resources/popup.js,
+
+
+
+
+
+
+
+
+
+
 				SafariWebExtensionHandler.swift,
 			);
 			target = B2C2F7ED2EA2ACB90051EEFB /* ipvfoo-safari Extension (iOS) */;
@@ -144,24 +157,34 @@
 
 				Resources/assets/1x1_808080.png,
 				Resources/assets/cached_arrow.png,
-				Resources/assets/detectdarkmode.html,
-				Resources/assets/detectdarkmode.js,
 				Resources/assets/gray_lock.png,
 				Resources/assets/gray_schrodingers_lock.png,
 				Resources/assets/gray_unlock.png,
 				Resources/assets/icon128.png,
-				Resources/assets/icon16.png,
 				Resources/assets/icon16_transparent.png,
+				Resources/assets/icon16.png,
 				Resources/assets/serviceworker.png,
 				Resources/assets/snip.png,
 				Resources/assets/sprites16.png,
 				Resources/assets/sprites32.png,
 				Resources/assets/websocket.png,
 				Resources/background.js,
+				Resources/detectdarkmode.html,
+				Resources/detectdarkmode.js,
 				Resources/manifest.json,
 				Resources/options.html,
 				Resources/popup.html,
 				Resources/popup.js,
+
+
+
+
+
+
+
+
+
+
 				SafariWebExtensionHandler.swift,
 			);
 			target = B2C2F7F72EA2ACB90051EEFB /* ipvfoo-safari Extension (macOS) */;
@@ -253,6 +276,9 @@
 		B2C2F7B42EA2ACB70051EEFB = {
 			isa = PBXGroup;
 			children = (
+				A43882D42EA43A1A00F64985 /* build_js.sh */,
+				A43882D52EA43A1A00F64985 /* open-safari-debugger.applescript */,
+				A43882D62EA43A1A00F64985 /* safari.xcfilelist */,
 				B2C2F7B92EA2ACB70051EEFB /* Shared (App) */,
 				B2C2F7C22EA2ACB90051EEFB /* Shared (Extension) */,
 				B2C2F7D32EA2ACB90051EEFB /* iOS (App) */,
@@ -341,6 +367,7 @@
 			buildPhases = (
 				B2C2F7EA2EA2ACB90051EEFB /* Sources */,
 				B2C2F7EB2EA2ACB90051EEFB /* Frameworks */,
+				A43883AC2EA43A6900F64985 /* ShellScript */,
 				B2C2F7EC2EA2ACB90051EEFB /* Resources */,
 			);
 			buildRules = (
@@ -363,7 +390,9 @@
 			buildPhases = (
 				B2C2F7F42EA2ACB90051EEFB /* Sources */,
 				B2C2F7F52EA2ACB90051EEFB /* Frameworks */,
+				A43883412EA43A4100F64985 /* ShellScript */,
 				B2C2F7F62EA2ACB90051EEFB /* Resources */,
+				A43884172EA43A8F00F64985 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -455,6 +484,66 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		A43883412EA43A4100F64985 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/build_js.sh",
+			);
+			outputFileListPaths = (
+				"$(SRCROOT)/safari.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\nif [ -n \"$SKIP_SCRIPT_PHASE\" ]; then\n  echo \"Skipping script phase.\"\nelse \n    chmod +x build_js.sh\n    ./build_js.sh\nfi\n\n\n";
+		};
+		A43883AC2EA43A6900F64985 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/build_js.sh",
+			);
+			outputFileListPaths = (
+				"$(SRCROOT)/safari.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\nif [ -n \"$SKIP_SCRIPT_PHASE\" ]; then\n  echo \"Skipping script phase.\"\n  exit 0\nfi\n\nchmod +x build_js.sh\n./build_js.sh\n";
+		};
+		A43884172EA43A8F00F64985 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/open-safari-debugger.applescript",
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n# ./open-safari-debugger.applescript\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		B2C2F7CD2EA2ACB90051EEFB /* Sources */ = {

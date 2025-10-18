@@ -5,15 +5,14 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "VERBOSE=1 node build.mjs",
-    "build:firefox": "VERBOSE=1 node build.mjs --targets firefox",
-    "build:chrome": "VERBOSE=1 node build.mjs --targets chrome",
-    "build:safari": "VERBOSE=1 node build.mjs --targets safari",
-    "watch": "VERBOSE=2 node build.mjs --watch",
-    "watch:debug": "DEBUG=1 LOG_VERBOSITY=5 node build.mjs --watch",
-    "watch:firefox": "VERBOSE=2 node build.mjs --watch --targets firefox",
-    "watch:chrome": "VERBOSE=2 node build.mjs --watch --targets chrome",
-    "watch:safari": "VERBOSE=2 node build.mjs --watch --targets safari"
+    "build": "node build.mjs",
+    "build:firefox": "node build.mjs --targets firefox",
+    "build:chrome": "node build.mjs --targets chrome",
+    "build:safari": "node build.mjs --targets safari",
+    "watch": "node build.mjs --watch",
+    "watch:firefox": "node build.mjs --watch --targets firefox",
+    "watch:chrome": "node build.mjs --watch --targets chrome",
+    "watch:safari": "node build.mjs --watch --targets safari"
   },
   "keywords": [],
   "author": "",

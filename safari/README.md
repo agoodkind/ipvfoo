@@ -5,8 +5,8 @@
 After cloning the repository:
 
 ```bash
-pnpm install
-make safari  # Build extension files
+make install  # Install dependencies
+make safari   # Build extension files
 ```
 
 **First time only:** After first build, open `safari/ipvfoo-safari.xcodeproj` in Xcode:
@@ -23,7 +23,7 @@ Asset files already have target membership configured. Only generated files need
 
 The following files in `Shared (Extension)/Resources/` must have target membership for both iOS and macOS extension targets:
 
-### Generated Files (via `build:xcode`)
+### Generated Files (via `make safari`)
 - `background.js`
 - `background.js.map`
 - `popup.js`
@@ -55,7 +55,7 @@ The following files in `Shared (Extension)/Resources/` must have target membersh
 
 ## Building
 
-1. Run `pnpm run build:xcode` to generate extension files
+1. Run `make safari` to generate extension files
 2. Open `ipvfoo-safari.xcodeproj` in Xcode
 3. Build and run the iOS or macOS target
 
@@ -64,7 +64,7 @@ The following files in `Shared (Extension)/Resources/` must have target membersh
 Use watch mode to rebuild on file changes:
 
 ```bash
-pnpm run watch:xcode
+make watch-safari
 ```
 
 The Xcode project will automatically pick up file changes after rebuilding.
