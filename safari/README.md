@@ -2,14 +2,22 @@
 
 ## Initial Setup
 
-After cloning the repository, run these commands:
+After cloning the repository:
 
 ```bash
 pnpm install
-pnpm run build:xcode
+make safari  # Build extension files
 ```
 
-This generates the required JavaScript and resource files in `Shared (Extension)/Resources/`.
+**First time only:** After first build, open `safari/ipvfoo-safari.xcodeproj` in Xcode:
+1. In project navigator, expand `Shared (Extension)/Resources/`
+2. Select the generated files: `background.js`, `popup.js`, `manifest.json`, `options.html`, `popup.html`
+3. In the File Inspector (right panel), under "Target Membership", check both:
+   - `ipvfoo-safari Extension (iOS)`
+   - `ipvfoo-safari Extension (macOS)`
+4. Save and close Xcode
+
+Asset files already have target membership configured. Only generated files need manual addition.
 
 ## Xcode Target Membership
 

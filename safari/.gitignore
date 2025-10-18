@@ -1,0 +1,12 @@
+# Xcode build outputs
+build/
+*.xcarchive
+
+# Target membership marker (run xcode:fix-targets to recreate)
+.xcode-targets-fixed
+
+# Backup files
+*.backup
+
+
+

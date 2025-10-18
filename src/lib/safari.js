@@ -1,3 +1,5 @@
+import { debugLog } from "./logger";
+
 /**
  * Looks up a domain using the native DNS resolver.
  * @param {string} domain - The domain to look up.
@@ -89,6 +91,7 @@ setInterval(() => {
  * @returns {Promise<string>} - The resolved IP address.
  */
 export const lookupDomainNative = async (domain) => {
+  const now = Date.now();
   // Check cache first
   const cacheEntry = dnsCache.get(domain);
   if (cacheEntry && now - cacheEntry.timestamp < DNS_CACHE_TTL) {
