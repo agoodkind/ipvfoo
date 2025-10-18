@@ -165,7 +165,7 @@ async function pushPattern(pattern, color) {
   }
   await spriteImgReady;
   for (const color of ["darkfg", "lightfg"]) {
-    const canvas = document.getElementById(`pattern_icon_${color}`);
+    const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById(`pattern_icon_${color}`));
     const ctx = canvas.getContext("2d");
     const imageData = buildIcon(pattern, 32, color);
     ctx.putImageData(imageData, 0, 0);
@@ -323,6 +323,7 @@ function makeRow(isFirst, tuple) {
     cacheTd.style.paddingLeft = '0';
   }
 
+  // @ts-ignore - Custom property for domain tracking
   tr._domain = domain;
   tr.appendChild(domainTd);
   tr.appendChild(addrTd);
@@ -372,7 +373,7 @@ function removeStyles(...selectors) {
   const stylesheet = document.styleSheets[0];
   for (const selector of selectors) {
     for (let i = stylesheet.cssRules.length - 1; i >= 0; i--) {
-      const rule = stylesheet.cssRules[i];
+      const rule = /** @type {CSSStyleRule} */ (stylesheet.cssRules[i]);
       if (rule.selectorText === selector) {
         stylesheet.deleteRule(i);
       }

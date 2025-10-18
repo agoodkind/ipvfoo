@@ -9,7 +9,6 @@ import {
   FLAG_SSL,
   FLAG_UNCACHED,
   FLAG_WEBSOCKET,
-  formatIPv6,
   INCOGNITO_COLOR,
   IP4_CHARS,
   IP6_CHARS,
@@ -22,11 +21,15 @@ import {
   setColorIsDarkMode,
   spriteImg,
   spriteImgReady,
-  watchOptions
+  watchOptions,
+  sleep,
+  IS_MOBILE,
+  reformatForNAT64
 } from "./lib/common.js";
 
 import {lookupDomainNative} from "./lib/safari.js";
 import {debugLog} from "./lib/logger.js";
+import { parseIP } from "lib/iputil.js";
 
 /*
 Copyright (C) 2011  Paul Marks  http://www.pmarks.net/
@@ -154,7 +157,7 @@ function updateNAT64(domain, addr) {
 // Magic object that calls action and/or pageAction. We want an icon in the
 // address bar when possible (e.g. desktop Firefox) but have a fallback option
 // when browsers forget to implement pageAction (e.g. Firefox 142 for Android).
-const actions = new Proxy({}, {
+const actions = /** @type {chrome.action & chrome.pageAction} */ (new Proxy({}, {
   get(target, prop) {
     const apis = [chrome.action, chrome.pageAction].filter(Boolean);
     return (...args) => {
@@ -162,12 +165,12 @@ const actions = new Proxy({}, {
         if (typeof api[prop] === 'function') {
           api[prop](...args);
         } else if (prop != 'show') {  // action.show() shouldn't exist.
-          throw new Error(`actions.${prop} is not a function`);
+          throw new Error(`actions.${String(prop)} is not a function`);
         }
       }
     };
   }
-});
+}));
 
 class SaveableEntry {
   #prefix;
@@ -337,7 +340,7 @@ class TabInfo extends SaveableEntry {
     this.updateIcon();
   }
 
-  remove() {
+  async remove() {
     super.remove();  // no await
     this.#state = TAB_DEAD;
     this.domains = newMap();
