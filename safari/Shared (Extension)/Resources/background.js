@@ -46,6 +46,11 @@ function debugLog() {
     popups.relayLog({  message: arguments, timestamp: timestamp });
   }
 }
+const isSafari = (typeof webkitURL !== 'undefined');
+// Once Chrome adds support for browser.* this needs to be updated
+// https://issues.chromium.org/issues/40556351
+const isFirefox = (typeof browser !== 'undefined' && !isSafari);
+
 if (chrome.runtime.getManifest().background.service_worker) {
   // This only runs on Chrome.
   // Firefox uses manifest.json/background/scripts instead.
@@ -74,10 +79,7 @@ const NAME_VERSION = (() => {
   return `${m.name} v${m.version}`;
 })();
 
-const isSafari = (typeof webkitURL !== 'undefined');
-// Once Chrome adds support for browser.* this needs to be updated
-// https://issues.chromium.org/issues/40556351
-const isFirefox = (typeof browser !== 'undefined' && !isSafari);
+
 
 // Log errors from async listeners, because otherwise Firefox hides them
 // in the global console.
@@ -664,126 +666,6 @@ function lookupOriginMap(origin) {
   // returns a Set of tabId values.
   return originMap[origin] || new Set();
 }
-
-// Cache IPv6 connectivity status to avoid repeated checks
-let ipv6ConnectivityCache = {
-  hasIPv6: null,
-  lastCheck: 0,
-  checkInterval: 5 * 60 * 1000 // 5 minutes
-};
-
-const checkIPv6Connectivity = async () => {
-  const now = Date.now();
-  
-  // Return cached result if recent
-  if (ipv6ConnectivityCache.hasIPv6 !== null && 
-      now - ipv6ConnectivityCache.lastCheck < ipv6ConnectivityCache.checkInterval) {
-    return ipv6ConnectivityCache.hasIPv6;
-  }
-
-  try {
-    // Test IPv6 connectivity by trying to reach Google's IPv6-only test endpoint
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1000);
-    
-    const response = await fetch('https://ipv6.google.com/', {
-      method: 'HEAD',
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
-    ipv6ConnectivityCache.hasIPv6 = response.ok;
-  } catch (error) {
-    // If the request fails, assume no IPv6 connectivity
-    ipv6ConnectivityCache.hasIPv6 = false;
-  }
-  
-  ipv6ConnectivityCache.lastCheck = now;
-  debugLog("IPv6 connectivity check:", ipv6ConnectivityCache.hasIPv6);
-  return ipv6ConnectivityCache.hasIPv6;
-};
-
-// Simple in-memory DNS cache for Safari web extensions
-const dnsCache = new Map();
-const DNS_CACHE_TTL = 2 * 1000; // 2 seconds
-const DNS_CACHE_MAX_SIZE = 100;
-
-// Periodically clean up expired cache entries
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of dnsCache.entries()) {
-    if (now - entry.timestamp >= DNS_CACHE_TTL) {
-      dnsCache.delete(key);
-      debugLog("DOH cache entry expired for", key);
-    }
-  }
-}, DNS_CACHE_TTL);
-
-/**
- * Looks up a domain using DNS over HTTPS (DoH) with in-memory caching.
- * @param {string} domain - The domain to look up.
- * @returns {Promise<string>} - The resolved IP address.
- */
-const lookupDomainDOH = async (domain) => {
-  const now = Date.now();
-  
-  // Check cache first
-  const cacheEntry = dnsCache.get(domain);
-  if (cacheEntry && (now - cacheEntry.timestamp < DNS_CACHE_TTL)) {
-    debugLog("DOH cache hit for", domain);
-    return cacheEntry.ip;
-  }
-
-  const hasV6Connectivity = await checkIPv6Connectivity();
-  
-  const promises = []
-  if (hasV6Connectivity) {
-    promises.push(
-      fetch(`https://one.one.one.one/dns-query?name=${domain}&type=AAAA`, {
-        headers: { 'Accept': 'application/dns-json' }
-      })
-    );
-  }
-
-  // This will also use HTTP/2 multiplexing to request both A and AAAA records in parallel
-  promises.push(
-    fetch(`https://one.one.one.one/dns-query?name=${domain}&type=A`, {
-      headers: { 'Accept': 'application/dns-json' }
-    })
-  );
-  
-  try {
-    const responses = await Promise.all(promises);
-    const jsonResults = await Promise.all(responses.map(r => r.json()));
-    /**
-     * @type {{
-     *   TTL: number,
-     *   data: string,
-     *   name: string,
-     *   type: number,
-     * }[]}
-     */
-    const allResults = jsonResults.flatMap(result => result.Answer || []);
-    const ip = allResults
-      .filter(d => d.type === 28 || d.type === 1)
-      // only include AAAA (28) and A (1) records
-      .map(d => d.data)[0] || null;
-
-    // Cache the result
-    if (ip) {
-      dnsCache.set(domain, {
-        ip: ip,
-        timestamp: now
-      });
-      debugLog("DOH result cached for", domain);
-    }
-
-    return ip;
-  } catch (error) {
-    debugLog("DOH lookup failed:", error);
-    return null;
-  }
-};
 
 // Dark mode detection. This can eventually be replaced by
 // https://github.com/w3c/webextensions/issues/229

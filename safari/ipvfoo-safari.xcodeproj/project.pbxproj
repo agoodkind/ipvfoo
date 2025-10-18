@@ -109,12 +109,10 @@
 		B2C2F82F2EA2ACB90051EEFB /* Exceptions for "Shared (Extension)" folder in "ipvfoo-safari Extension (iOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Resources/_locales,
 				Resources/1x1_808080.png,
 				Resources/background.js,
 				Resources/cached_arrow.png,
 				Resources/common.js,
-				Resources/content.js,
 				Resources/detectdarkmode.html,
 				Resources/detectdarkmode.js,
 				Resources/gray_lock.png,
@@ -123,14 +121,13 @@
 				Resources/icon16_transparent.png,
 				Resources/icon16.png,
 				Resources/icon128.png,
-				Resources/images,
 				Resources/iputil.js,
 				Resources/manifest.json,
 				Resources/options.html,
 				Resources/options.js,
-				Resources/popup.css,
 				Resources/popup.html,
 				Resources/popup.js,
+				Resources/safari.js,
 				Resources/serviceworker.png,
 				Resources/snip.png,
 				Resources/sprites16.png,
@@ -143,12 +140,10 @@
 		B2C2F8302EA2ACB90051EEFB /* Exceptions for "Shared (Extension)" folder in "ipvfoo-safari Extension (macOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Resources/_locales,
 				Resources/1x1_808080.png,
 				Resources/background.js,
 				Resources/cached_arrow.png,
 				Resources/common.js,
-				Resources/content.js,
 				Resources/detectdarkmode.html,
 				Resources/detectdarkmode.js,
 				Resources/gray_lock.png,
@@ -157,14 +152,13 @@
 				Resources/icon16_transparent.png,
 				Resources/icon16.png,
 				Resources/icon128.png,
-				Resources/images,
 				Resources/iputil.js,
 				Resources/manifest.json,
 				Resources/options.html,
 				Resources/options.js,
-				Resources/popup.css,
 				Resources/popup.html,
 				Resources/popup.js,
+				Resources/safari.js,
 				Resources/serviceworker.png,
 				Resources/snip.png,
 				Resources/sprites16.png,
@@ -191,10 +185,6 @@
 			exceptions = (
 				B2C2F82F2EA2ACB90051EEFB /* Exceptions for "Shared (Extension)" folder in "ipvfoo-safari Extension (iOS)" target */,
 				B2C2F8302EA2ACB90051EEFB /* Exceptions for "Shared (Extension)" folder in "ipvfoo-safari Extension (macOS)" target */,
-			);
-			explicitFolders = (
-				Resources/_locales,
-				Resources/images,
 			);
 			path = "Shared (Extension)";
 			sourceTree = "<group>";

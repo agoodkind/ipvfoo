@@ -5,35 +5,37 @@
   "description": "Display the server IP address, with a realtime summary of IPv4, IPv6, and HTTPS information across all page elements.",
   "homepage_url": "https://github.com/pmarks-net/ipvfoo",
   "icons": {
-    "16": "src/icon16.png",
-    "128": "src/icon128.png"
+    "16": "icon16.png",
+    "128": "icon128.png"
   },
   "background": {
     "scripts": [
-      "src/iputil.js",
-      "src/common.js",
-      "src/background.js"
+      "safari.js",
+      "iputil.js",
+      "common.js",
+      "background.js"
     ]
   },
   "action": {
     "default_icon": {
-      "16": "src/icon16_transparent.png"
+      "16": "icon16_transparent.png"
     }
   },
   "page_action": {
     "default_icon": {
-      "16": "src/icon16_transparent.png"
+      "16": "icon16_transparent.png"
     }
   },
   "options_ui": {
-    "page": "src/options.html",
+    "page": "options.html",
     "browser_style": false
   },
   "permissions": [
     "contextMenus",
     "storage",
     "webNavigation",
-    "webRequest"
+    "webRequest",
+    "nativeMessaging"
   ],
   "host_permissions": [
     "<all_urls>"
