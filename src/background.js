@@ -26,11 +26,11 @@ import {
   IS_MOBILE,
   reformatForNAT64,
   isFirefox,
-  isSafari,
-} from './lib/common.js'
+  isSafari
+} from "./lib/common.js";
 
-import { lookupDomainNative } from './lib/safari.js'
-import { parseIP } from 'lib/iputil.js'
+import { lookupDomainNative } from "./lib/safari.js";
+import { parseIP } from "lib/iputil.js";
 
 /*
 Copyright (C) 2011  Paul Marks  http://www.pmarks.net/
@@ -69,52 +69,52 @@ Popup updates begin sooner, in wR.onBeforeRequest(main_frame), because the
 user can demand a popup before any IP addresses are available.
 */
 
-;('use strict')
+"use strict";
 
 // Possible states for an instance of TabInfo.
 // We begin at BIRTH, and only ever move forward, not backward.
-const TAB_BIRTH = 0 // Waiting for makeAlive() or remove()
-const TAB_ALIVE = 1 // Waiting for remove()
-const TAB_DEAD = 2
+const TAB_BIRTH = 0;    // Waiting for makeAlive() or remove()
+const TAB_ALIVE = 1;    // Waiting for remove()
+const TAB_DEAD = 2;
 
 // RequestFilter for webRequest events.
-const FILTER_ALL_URLS = { urls: ['<all_urls>'] }
+const FILTER_ALL_URLS = { urls: ["<all_urls>"] };
 
-const SECONDS = 1000 // to milliseconds
+const SECONDS = 1000;  // to milliseconds
 
 const NAME_VERSION = (() => {
-  const m = chrome.runtime.getManifest()
-  return `${m.name} v${m.version}`
-})()
+  const m = chrome.runtime.getManifest();
+  return `${m.name} v${m.version}`;
+})();
 
 if (isSafari) {
-  VERBOSE3: console.log('Safari detected')
+  VERBOSE3: console.log("Safari detected");
   chrome.runtime.onMessage.addListener((msg) => {
-    if (msg.cmd == 'relay' || msg.cmd == 'popupLoaded') {
-      VERBOSE3: console.log('relay', ...msg)
+    if (msg.cmd == "relay" || msg.cmd == "popupLoaded") {
+      VERBOSE3: console.log("relay", ...msg);
     }
-  })
+  });
 
   setTimeout(() => {
     // chrome..sendMessage({cmd: "backgroundLoaded"});
-  }, 1000)
+  }, 1000);
 }
 
 /**
- * Gets the domain of a tab from source of truth
+ * Gets the domain of a tab from source of truth 
  * that is, the domain of the URL that is currently displayed in the URL bar.
  * @param {number} tabId - The tab ID to get the URL of.
  * @returns {Promise<string | null>} - The domain of the tab.
  */
 async function getTrueTabDomain(tabId) {
   try {
-    const tabInfo = await chrome.tabs.get(tabId)
-    const domain = parseUrl(tabInfo.url).domain
-    VERBOSE3: console.log('getTrueTabDomain success', domain)
-    return domain
+    const tabInfo = await chrome.tabs.get(tabId);
+    const domain = parseUrl(tabInfo.url).domain;
+    VERBOSE3: console.log("getTrueTabDomain success", domain);
+    return domain;
   } catch (error) {
-    VERBOSE3: console.error('getTrueTabDomain error', error)
-    return null
+    VERBOSE3: console.error("getTrueTabDomain error", error);
+    return null;
   }
 }
 /**
@@ -123,452 +123,425 @@ async function getTrueTabDomain(tabId) {
  * @returns {Promise<boolean>} - True if the true tab domain matches the source of truth, false otherwise
  */
 const isMainTabUrl = async (details) => {
-  if (details.type != 'main_frame' && details.type != 'outermost_frame') {
-    return false
+  if (details.type != "main_frame" && details.type != "outermost_frame") {
+    return false;
   }
   try {
-    const trueTabDomain = await getTrueTabDomain(details.tabId)
-    return trueTabDomain === parseUrl(details.url).domain
+    const trueTabDomain = await getTrueTabDomain(details.tabId);
+    return trueTabDomain === parseUrl(details.url).domain;
   } catch (error) {
-    VERBOSE2: console.error('isMainTabUrl error', error)
-    return false
+    VERBOSE2: console.error("isMainTabUrl error", error);
+    return false;
   }
 }
 
 // Log errors from async listeners, because otherwise Firefox hides them
 // in the global console.
 function wrap(f) {
-  const tracer = new Error('wrap() stack trace')
-  return (...args) =>
-    f(...args).catch((err) => {
-      console.error('Error in async listener:', err, tracer)
-    })
+  const tracer = new Error("wrap() stack trace");
+  return (...args) => f(...args).catch((err) => {
+    console.error("Error in async listener:", err, tracer);
+  });
 }
 
 function parseUrl(url) {
-  let domain = null
-  let ssl = false
-  let ws = false
+  let domain = null;
+  let ssl = false;
+  let ws = false;
 
-  const u = new URL(url)
-  if (u.protocol == 'file:') {
-    domain = 'file://'
-  } else if (u.protocol == 'chrome:') {
-    domain = 'chrome://'
+  const u = new URL(url);
+  if (u.protocol == "file:") {
+    domain = "file://";
+  } else if (u.protocol == "chrome:") {
+    domain = "chrome://";
   } else {
-    domain = u.hostname || ''
+    domain = u.hostname || "";
     switch (u.protocol) {
-      case 'https:':
-        ssl = true
-        break
-      case 'wss:':
-        ssl = true
+      case "https:":
+        ssl = true;
+        break;
+      case "wss:":
+        ssl = true;
       // fallthrough
-      case 'ws:':
-        ws = true
-        break
+      case "ws:":
+        ws = true;
+        break;
     }
   }
-  return { domain: domain, ssl: ssl, ws: ws, origin: u.origin }
+  return { domain: domain, ssl: ssl, ws: ws, origin: u.origin };
 }
 
 function updateNAT64(domain, addr) {
   if (!(IPV4_ONLY_DOMAINS.has(domain) && addr)) {
-    return
+    return;
   }
-  const packed = parseIP(addr)
+  const packed = parseIP(addr);
   if (packed.length != 128 / 4) {
-    return // not an IPv6 address
+    return;  // not an IPv6 address
   }
   // Heuristic: Don't consider this a NAT64 prefix if the embedded
   // IPv4 address falls under 0.x.x.x/8.  This filters out cases where all
   // traffic is proxied to the same address, assuming that most proxies
   // have a low-numbered suffix like ::1.
   if (packed.substr(96 / 4, 2) == '00') {
-    return
+    return;
   }
   // If this is a new prefix, the watchOptions callback will handle it.
-  addPackedNAT64(packed.slice(0, 96 / 4))
+  addPackedNAT64(packed.slice(0, 96 / 4));
 }
 
 // Magic object that calls action and/or pageAction. We want an icon in the
 // address bar when possible (e.g. desktop Firefox) but have a fallback option
 // when browsers forget to implement pageAction (e.g. Firefox 142 for Android).
-const actions = /** @type {chrome.action & chrome.pageAction} */ (
-  new Proxy(
-    {},
-    {
-      get(target, prop) {
-        const apis = [chrome.action, chrome.pageAction].filter(Boolean)
-        return (...args) => {
-          for (const api of apis) {
-            if (typeof api[prop] === 'function') {
-              api[prop](...args)
-            } else if (prop != 'show') {
-              // action.show() shouldn't exist.
-              throw new Error(`actions.${String(prop)} is not a function`)
-            }
-          }
+const actions = /** @type {chrome.action & chrome.pageAction} */ (new Proxy({}, {
+  get(target, prop) {
+    const apis = [chrome.action, chrome.pageAction].filter(Boolean);
+    return (...args) => {
+      for (const api of apis) {
+        if (typeof api[prop] === 'function') {
+          api[prop](...args);
+        } else if (prop != 'show') {  // action.show() shouldn't exist.
+          throw new Error(`actions.${String(prop)} is not a function`);
         }
-      },
-    }
-  )
-)
+      }
+    };
+  }
+}));
 
 class SaveableEntry {
-  #prefix
-  #id
-  #dirty = false
-  #remove = false
-  #savedJSON = null
+  #prefix;
+  #id;
+  #dirty = false;
+  #remove = false;
+  #savedJSON = null;
 
   constructor(prefix, id) {
-    if (!prefix) throw 'missing prefix'
-    if (!id) throw 'missing id'
-    this.#prefix = prefix
-    this.#id = id
+    if (!prefix) throw "missing prefix";
+    if (!id) throw "missing id";
+    this.#prefix = prefix;
+    this.#id = id;
   }
 
-  id() {
-    return this.#id
-  }
+  id() { return this.#id; }
 
   load(j) {
-    this.#savedJSON = j
+    this.#savedJSON = j;
     for (const [k, v] of Object.entries(JSON.parse(j))) {
       if (this.hasOwnProperty(k)) {
-        this[k] = v
+        this[k] = v;
       } else {
-        console.error('skipping unknown key', k)
+        console.error("skipping unknown key", k);
       }
     }
-    return this
+    return this;
   }
 
   // Limit to 1 in-flight chrome.storage operation per key.
   // No need to await.
   async save() {
     if (this.#dirty) {
-      return // Already saving.
+      return;  // Already saving.
     }
-    this.#dirty = true
-    await null // Let the caller finish first.
+    this.#dirty = true;
+    await null;  // Let the caller finish first.
     while (this.#dirty) {
-      this.#dirty = false
+      this.#dirty = false;
       const key = `${this.#prefix}${this.#id}`
       if (this.#remove) {
-        await chrome.storage.session.remove(key)
-        return
+        await chrome.storage.session.remove(key);
+        return;
       }
-      const j = JSON.stringify(this)
+      const j = JSON.stringify(this);
       if (this.#savedJSON == j) {
-        return
+        return;
       }
-      VERBOSE3: console.log('saving', key, JSON.parse(j))
-      await chrome.storage.session.set({ [key]: j })
-      this.#savedJSON = j
+      VERBOSE3: console.log("saving", key, JSON.parse(j));
+      await chrome.storage.session.set({ [key]: j });
+      this.#savedJSON = j;
     }
   }
 
   // No need to await.
   async remove() {
-    this.#remove = true
-    await this.save()
+    this.#remove = true;
+    await this.save();
   }
 }
 
 class SaveableMap {
-  #factory
-  #prefix
+  #factory;
+  #prefix;
 
   constructor(factory, prefix) {
-    this.#factory = factory
-    this.#prefix = prefix
+    this.#factory = factory;
+    this.#prefix = prefix;
   }
 
   validateId(id) {
-    if (this.#prefix == 'ip/') {
+    if (this.#prefix == "ip/") {
       // Don't restrict ipCache domain name keys.
-      return id
+      return id;
     } else {
-      const idNumeric = parseInt(id, 10)
+      const idNumeric = parseInt(id, 10);
       if (idNumeric) {
-        return idNumeric
+        return idNumeric;
       }
     }
-    throw `malformed id: ${id}`
+    throw `malformed id: ${id}`;
   }
 
   load(key, savedJSON) {
     if (!key.startsWith(this.#prefix)) {
-      return false
+      return false;
     }
-    const suffix = key.slice(this.#prefix.length)
-    let id
+    const suffix = key.slice(this.#prefix.length);
+    let id;
     try {
-      id = this.validateId(suffix)
+      id = this.validateId(suffix);
     } catch (err) {
-      console.error(err)
-      return false
+      console.error(err);
+      return false;
     }
-    this[id] = new this.#factory(this.#prefix, id).load(savedJSON)
-    return true
+    this[id] = new this.#factory(this.#prefix, id).load(savedJSON);
+    return true;
   }
 
   lookupOrNew(id) {
-    id = this.validateId(id)
-    let o = this[id]
+    id = this.validateId(id);
+    let o = this[id];
     if (!o) {
-      o = this[id] = new this.#factory(this.#prefix, id)
+      o = this[id] = new this.#factory(this.#prefix, id);
     }
-    return o
+    return o;
   }
 
   remove(id) {
-    id = this.validateId(id)
-    const o = this[id]
+    id = this.validateId(id);
+    const o = this[id];
     if (o) {
-      delete this[id]
-      o.remove()
+      delete this[id];
+      o.remove();
     }
-    return o
+    return o;
   }
 }
 
 // -- TabInfo --
 
 class TabInfo extends SaveableEntry {
-  born = Date.now() // For TabTracker timeout.
-  mainRequestId = null // Request that constructed this tab, if any.
-  mainDomain = '' // Bare domain from the main_frame request.
-  mainOrigin = '' // Origin from the main_frame request.
-  committed = false // True if onCommitted has fired.
-  domains = newMap() // Updated whenever we get some IPs.
-  spillCount = 0 // How many requests didn't fit in domains.
-  lastPattern = '' // To avoid redundant icon redraws.
-  lastTooltip = '' // To avoid redundant tooltip updates.
-  color = REGULAR_COLOR // or INCOGNITO_COLOR
+  born = Date.now();     // For TabTracker timeout.
+  mainRequestId = null;  // Request that constructed this tab, if any.
+  mainDomain = "";       // Bare domain from the main_frame request.
+  mainOrigin = "";       // Origin from the main_frame request.
+  committed = false;     // True if onCommitted has fired.
+  domains = newMap();    // Updated whenever we get some IPs.
+  spillCount = 0;        // How many requests didn't fit in domains.
+  lastPattern = "";      // To avoid redundant icon redraws.
+  lastTooltip = "";      // To avoid redundant tooltip updates.
+  color = REGULAR_COLOR  // or INCOGNITO_COLOR
 
   // Private, to avoid writing to storage.
-  #state = TAB_BIRTH
+  #state = TAB_BIRTH;
 
   constructor(prefix, tabId) {
-    super(prefix, tabId)
+    super(prefix, tabId);
 
-    if (!spriteImg.ready) throw 'must await spriteImgReady!'
-    if (!options.ready) throw 'must await optionsReady!'
+    if (!spriteImg.ready) throw "must await spriteImgReady!";
+    if (!options.ready) throw "must await optionsReady!";
 
-    if (tabMap[tabId]) throw 'Duplicate entry in tabMap'
+    if (tabMap[tabId]) throw "Duplicate entry in tabMap";
     if (tabTracker.exists(tabId)) {
-      this.makeAlive()
+      this.makeAlive();
     }
   }
 
   afterLoad() {
     for (const [domain, json] of Object.entries(this.domains)) {
-      this.domains[domain] = DomainInfo.fromJSON(this, domain, json)
+      this.domains[domain] = DomainInfo.fromJSON(this, domain, json);
     }
-    updateOriginMap(this.id(), null, this.mainOrigin)
+    updateOriginMap(this.id(), null, this.mainOrigin);
   }
 
   tooYoungToDie() {
     // Spare new tabs from garbage collection for a minute or so.
-    return this.#state == TAB_BIRTH && this.born >= Date.now() - 60 * SECONDS
+    return (this.#state == TAB_BIRTH &&
+      this.born >= Date.now() - 60 * SECONDS);
   }
 
   makeAlive() {
     if (this.#state != TAB_BIRTH) {
-      return
+      return;
     }
-    this.#state = TAB_ALIVE
-    this.updateIcon()
+    this.#state = TAB_ALIVE;
+    this.updateIcon();
   }
 
   async remove() {
-    super.remove() // no await
-    this.#state = TAB_DEAD
-    this.domains = newMap()
-    updateOriginMap(this.id(), this.mainOrigin, null)
+    super.remove();  // no await
+    this.#state = TAB_DEAD;
+    this.domains = newMap();
+    updateOriginMap(this.id(), this.mainOrigin, null);
   }
 
   setInitialDomain(requestId, domain, origin) {
     if (this.mainRequestId == null) {
-      this.mainRequestId = requestId
+      this.mainRequestId = requestId;
     } else if (this.mainRequestId != requestId) {
-      console.error('mainRequestId changed!')
+      console.error("mainRequestId changed!");
     }
-    this.mainDomain = domain
-    updateOriginMap(this.id(), this.mainOrigin, origin)
-    this.mainOrigin = origin
+    this.mainDomain = domain;
+    updateOriginMap(this.id(), this.mainOrigin, origin);
+    this.mainOrigin = origin;
 
     // If anyone's watching, show some preliminary state.
-    this.pushAll()
-    this.save()
+    this.pushAll();
+    this.save();
   }
 
   setCommitted(domain, origin) {
-    let changed = false
+    let changed = false;
 
     if (this.mainDomain != domain) {
-      this.mainDomain = domain
-      changed = true
+      this.mainDomain = domain;
+      changed = true;
     }
-    this.committed = true
+    this.committed = true;
 
     // This is usually redundant, but lastPattern takes care of it.
-    this.updateIcon()
+    this.updateIcon();
 
     // If the table contents changed, then redraw it.
     if (changed) {
-      this.pushAll()
+      this.pushAll();
     }
 
-    this.save()
+    this.save();
   }
 
   // If the pageAction is supposed to be visible now, then draw it again.
   refreshPageAction() {
-    this.lastTooltip = ''
-    this.lastPattern = ''
-    this.updateIcon()
-    this.save()
+    this.lastTooltip = "";
+    this.lastPattern = "";
+    this.updateIcon();
+    this.save();
   }
 
   addDomain(domain, addr, flags) {
-    VERBOSE2: console.log('addDomain before', domain, addr, flags, this.domains)
-    let d = this.domains[domain]
+    VERBOSE2: console.log("addDomain before", domain, addr, flags, this.domains);
+    let d = this.domains[domain];
     if (!d) {
       // Limit the number of domains per page, to avoid wasting RAM.
       if (Object.keys(this.domains).length >= 256) {
-        popups.pushSpillCount(this.id(), ++this.spillCount)
-        return
+        popups.pushSpillCount(this.id(), ++this.spillCount);
+        return;
       }
-      d = this.domains[domain] = new DomainInfo(
-        this,
-        domain,
-        addr || '(lost)',
-        flags
-      )
-      d.countUp()
+      d = this.domains[domain] =
+        new DomainInfo(this, domain, addr || "(lost)", flags);
+      d.countUp();
     } else {
-      const oldAddr = d.addr
-      const oldFlags = d.flags
+      const oldAddr = d.addr;
+      const oldFlags = d.flags;
       // Don't allow a cached IP to overwrite an actually-connected IP.
-      if (addr && (flags & FLAG_UNCACHED || !(oldFlags & FLAG_UNCACHED))) {
-        d.addr = addr
+      if (addr && ((flags & FLAG_UNCACHED) || !(oldFlags & FLAG_UNCACHED))) {
+        d.addr = addr;
       }
       // Merge in the previous flags.
-      d.flags |= flags
-      d.countUp()
+      d.flags |= flags;
+      d.countUp();
       // Don't update if nothing has changed.
       if (d.addr == oldAddr && d.flags == oldFlags) {
-        return
+        return;
       }
     }
 
-    this.updateIcon()
-    this.pushOne(domain)
-    this.save()
+    this.updateIcon();
+    this.pushOne(domain);
+    this.save();
   }
 
   updateIcon() {
     if (!(this.#state == TAB_ALIVE)) {
-      return
+      return;
     }
-    let pattern = '?'
-    let has4 = false
-    let has6 = false
-    let tooltip = ''
+    let pattern = "?";
+    let has4 = false;
+    let has6 = false;
+    let tooltip = "";
     for (const [domain, d] of Object.entries(this.domains)) {
       if (domain == this.mainDomain) {
-        pattern = d.addrVersion()
+        pattern = d.addrVersion();
         if (IS_MOBILE) {
-          tooltip = d.addr // Limited tooltip space on Android.
+          tooltip = d.addr;  // Limited tooltip space on Android.
         } else {
-          tooltip = `${d.addr}\n${NAME_VERSION}`
+          tooltip = `${d.addr}\n${NAME_VERSION}`;
         }
       } else {
         switch (d.addrVersion()) {
-          case '4':
-            has4 = true
-            break
-          case '6':
-            has6 = true
-            break
+          case "4": has4 = true; break;
+          case "6": has6 = true; break;
         }
       }
     }
-    if (has4) pattern += '4'
-    if (has6) pattern += '6'
+    if (has4) pattern += "4";
+    if (has6) pattern += "6";
 
     // Don't waste time rewriting the same tooltip.
     if (this.lastTooltip != tooltip) {
       actions.setTitle({
-        tabId: this.id(),
-        title: tooltip,
-      })
-      this.lastTooltip = tooltip
-      this.save()
+        "tabId": this.id(),
+        "title": tooltip,
+      });
+      this.lastTooltip = tooltip;
+      this.save();
     }
 
     // Don't waste time redrawing the same icon.
     if (this.lastPattern != pattern) {
-      const color = options[this.color]
+      const color = options[this.color];
       actions.setIcon({
-        tabId: this.id(),
-        imageData: {
-          16: buildIcon(pattern, 16, color),
-          32: buildIcon(pattern, 32, color),
+        "tabId": this.id(),
+        "imageData": {
+          "16": buildIcon(pattern, 16, color),
+          "32": buildIcon(pattern, 32, color),
         },
-      })
+      });
       // Send icon to the popup window.
-      popups.pushPattern(this.id(), pattern, this.color)
+      popups.pushPattern(this.id(), pattern, this.color);
       actions.setPopup({
-        tabId: this.id(),
-        popup: `popup.html#${this.id()}`,
-      })
-      actions.show(this.id())
-      this.lastPattern = pattern
-      this.save()
+        "tabId": this.id(),
+        "popup": `popup.html#${this.id()}`,
+      });
+      actions.show(this.id());
+      this.lastPattern = pattern;
+      this.save();
     }
   }
 
   pushAll() {
-    popups.pushAll(
-      this.id(),
-      this.getTuples(),
-      this.lastPattern,
-      this.color,
-      this.spillCount
-    )
+    popups.pushAll(this.id(), this.getTuples(), this.lastPattern, this.color, this.spillCount);
   }
 
   pushOne(domain) {
-    popups.pushOne(this.id(), this.getTuple(domain))
+    popups.pushOne(this.id(), this.getTuple(domain));
   }
 
   // Build some [domain, addr, version, flags] tuples, for a popup.
   getTuples() {
-    const mainDomain = this.mainDomain || '(no domain)'
-    const domains = Object.keys(this.domains).sort()
-    const mainTuple = [
-      mainDomain,
-      '(no address)',
-      '?',
-      FLAG_UNCACHED | FLAG_NOTWORKER,
-    ]
-    const tuples = [mainTuple]
+    const mainDomain = this.mainDomain || "(no domain)";
+    const domains = Object.keys(this.domains).sort();
+    const mainTuple = [mainDomain, "(no address)", "?", FLAG_UNCACHED | FLAG_NOTWORKER];
+    const tuples = [mainTuple];
     for (const domain of domains) {
-      const d = this.domains[domain]
+      const d = this.domains[domain];
       if (domain == mainTuple[0]) {
-        mainTuple[1] = d.addr
-        mainTuple[2] = d.addrVersion()
-        mainTuple[3] = d.flags
+        mainTuple[1] = d.addr;
+        mainTuple[2] = d.addrVersion();
+        mainTuple[3] = d.flags;
       } else {
-        tuples.push([domain, d.addr, d.addrVersion(), d.flags])
+        tuples.push([domain, d.addr, d.addrVersion(), d.flags]);
       }
     }
-    return tuples
+    return tuples;
   }
 
   // Build [domain, addr, version, flags] tuple, for a popup.
@@ -577,71 +550,71 @@ class TabInfo extends SaveableEntry {
    * @returns {array} tuple
    */
   getTuple(domain) {
-    const d = this.domains[domain]
+    const d = this.domains[domain];
     if (!d) {
       // Perhaps this.domains was cleared during the request's lifetime.
-      return null
+      return null;
     }
-    return [domain, d.addr, d.addrVersion(), d.flags]
+    return [domain, d.addr, d.addrVersion(), d.flags];
   }
 }
 
 class DomainInfo {
-  tabInfo
-  domain
-  addr
-  flags
+  tabInfo;
+  domain;
+  addr;
+  flags;
 
-  count = 0 // count of active requests
-  inhibitZero = false
+  count = 0;  // count of active requests
+  inhibitZero = false;
 
   constructor(tabInfo, domain, addr, flags) {
-    this.tabInfo = tabInfo
-    this.domain = domain
-    this.addr = addr
-    this.flags = flags
+    this.tabInfo = tabInfo;
+    this.domain = domain;
+    this.addr = addr;
+    this.flags = flags;
   }
 
   // count and FLAG_CONNECTED will be computed from requestMap.
   toJSON() {
-    return [this.addr, this.flags & ~FLAG_CONNECTED]
+    return [this.addr, this.flags & ~FLAG_CONNECTED];
   }
 
   static fromJSON(tabInfo, domain, json) {
-    const [addr, flags] = json
-    return new DomainInfo(tabInfo, domain, addr, flags)
+    const [addr, flags] = json;
+    return new DomainInfo(tabInfo, domain, addr, flags);
   }
 
   addrVersion() {
     if (this.addr) {
       // NAT64 addresses use the prefix::a.b.c.d format.
-      if (this.addr.indexOf('.') >= 0) return '4'
-      if (this.addr.indexOf(':') >= 0) return '6'
+      if (this.addr.indexOf(".") >= 0) return "4";
+      if (this.addr.indexOf(":") >= 0) return "6";
     }
-    return '?'
+    return "?";
   }
 
   async countUp() {
-    this.flags |= FLAG_CONNECTED
+    this.flags |= FLAG_CONNECTED;
     if (++this.count == 1 && !this.inhibitZero) {
       // Keep the address highlighted for at least 500ms.
-      this.inhibitZero = true
-      await sleep(500)
-      this.inhibitZero = false
-      this.#checkZero()
+      this.inhibitZero = true;
+      await sleep(500);
+      this.inhibitZero = false;
+      this.#checkZero();
     }
   }
 
   countDown() {
-    if (!(this.count > 0)) throw 'Count went negative!'
-    --this.count
-    this.#checkZero()
+    if (!(this.count > 0)) throw "Count went negative!";
+    --this.count;
+    this.#checkZero();
   }
 
   #checkZero() {
     if (this.count == 0 && !this.inhibitZero) {
-      this.flags &= ~FLAG_CONNECTED
-      this.tabInfo.pushOne(this.domain)
+      this.flags &= ~FLAG_CONNECTED;
+      this.tabInfo.pushOne(this.domain);
     }
   }
 }
@@ -649,174 +622,175 @@ class DomainInfo {
 class RequestInfo extends SaveableEntry {
   // Typically this contains one {tabId: tabBorn} entry,
   // but for Service Worker requests there may be multiple tabs.
-  tabIdToBorn = newMap()
-  domain = null
+  tabIdToBorn = newMap();
+  domain = null;
 
   afterLoad() {
     for (const [tabId, tabBorn] of Object.entries(this.tabIdToBorn)) {
-      const tabInfo = tabMap[tabId]
+      const tabInfo = tabMap[tabId];
       if (tabInfo?.born != tabBorn) {
-        delete this.tabIdToBorn[tabId]
-        continue
+        delete this.tabIdToBorn[tabId];
+        continue;
       }
       if (!this.domain) {
-        continue // still waiting for onResponseStarted
+        continue;  // still waiting for onResponseStarted
       }
-      tabInfo.addDomain(this.domain, null, 0)
+      tabInfo.addDomain(this.domain, null, 0);
     }
     if (Object.keys(this.tabIdToBorn).length == 0) {
-      requestMap.remove(this.id())
-      VERBOSE1: console.log('garbage-collected RequestInfo', this.id())
-      return
+      requestMap.remove(this.id());
+      VERBOSE1: console.log("garbage-collected RequestInfo", this.id());
+      return;
     }
   }
 }
 
 class IPCacheEntry extends SaveableEntry {
-  time = 0
-  addr = ''
+  time = 0;
+  addr = "";
 }
 
 // tabId -> TabInfo
-const tabMap = new SaveableMap(TabInfo, 'tab/')
+const tabMap = new SaveableMap(TabInfo, "tab/")
 
 // requestId -> RequestInfo
-const requestMap = new SaveableMap(RequestInfo, 'req/')
+const requestMap = new SaveableMap(RequestInfo, "req/");
 
 // For Firefox domain->ip cache
 // in Firefox cached pages do not return IP in details
 // https://bugzilla.mozilla.org/show_bug.cgi?id=1395020
-const IP_CACHE_LIMIT = 1024
-const ipCache = isFirefox ? new SaveableMap(IPCacheEntry, 'ip/') : null
-let ipCacheSize = 0
+const IP_CACHE_LIMIT = 1024;
+const ipCache = isFirefox ?
+  new SaveableMap(IPCacheEntry, "ip/") : null;
+let ipCacheSize = 0;
 
 function ipCacheGrew() {
-  ++ipCacheSize
-  VERBOSE2: console.log('ipCache', ipCacheSize, Object.keys(ipCache).length)
+  ++ipCacheSize;
+  VERBOSE2: console.log("ipCache", ipCacheSize, Object.keys(ipCache).length);
   if (ipCacheSize <= IP_CACHE_LIMIT) {
-    return
+    return;
   }
   // Garbage collect half the entries.
-  const flat = Object.values(ipCache)
-  flat.sort((a, b) => a.time - b.time)
-  ipCacheSize = flat.length // redundant
+  const flat = Object.values(ipCache);
+  flat.sort((a, b) => a.time - b.time);
+  ipCacheSize = flat.length;  // redundant
   for (const cachedAddr of flat) {
-    ipCache.remove(cachedAddr.id())
+    ipCache.remove(cachedAddr.id());
     if (--ipCacheSize <= IP_CACHE_LIMIT / 2) {
-      break
+      break;
     }
   }
 }
 
 // mainOrigin -> Set of tabIds, for tabless service workers.
-const originMap = newMap()
+const originMap = newMap();
 
 function updateOriginMap(tabId, oldOrigin, newOrigin) {
   if (oldOrigin && oldOrigin != newOrigin) {
-    const tabs = originMap[oldOrigin]
+    const tabs = originMap[oldOrigin];
     if (tabs) {
-      tabs.delete(tabId)
+      tabs.delete(tabId);
       if (!tabs.size) {
-        delete originMap[oldOrigin]
+        delete originMap[oldOrigin];
       }
     }
   }
   if (newOrigin) {
-    let tabs = originMap[newOrigin]
+    let tabs = originMap[newOrigin];
     if (!tabs) {
-      tabs = originMap[newOrigin] = new Set()
+      tabs = originMap[newOrigin] = new Set();
     }
-    tabs.add(tabId)
+    tabs.add(tabId);
   }
 }
 
 function lookupOriginMap(origin) {
   // returns a Set of tabId values.
-  return originMap[origin] || new Set()
+  return originMap[origin] || new Set();
 }
 
 // Dark mode detection. This can eventually be replaced by
 // https://github.com/w3c/webextensions/issues/229
 if (typeof window !== 'undefined' && window.matchMedia) {
   // Firefox can detect dark mode from the background page.
-  ;(async () => {
-    VERBOSE2: console.log('detectdarkmode')
-    await optionsReady
-    VERBOSE2: console.log('optionsReady')
-    const query = window.matchMedia('(prefers-color-scheme: dark)')
-    VERBOSE2: console.log('query', query)
-    setColorIsDarkMode(REGULAR_COLOR, query.matches)
-    VERBOSE2: console.log('setColorIsDarkMode', query.matches)
-    query.addEventListener('change', (event) => {
-      VERBOSE2: console.log('change', event)
-      setColorIsDarkMode(REGULAR_COLOR, event.matches)
-    })
-  })()
+  (async () => {
+    VERBOSE2: console.log("detectdarkmode");
+    await optionsReady;
+    VERBOSE2: console.log("optionsReady");
+    const query = window.matchMedia('(prefers-color-scheme: dark)');
+    VERBOSE2: console.log("query", query);
+    setColorIsDarkMode(REGULAR_COLOR, query.matches);
+    VERBOSE2: console.log("setColorIsDarkMode", query.matches);
+    query.addEventListener("change", (event) => {
+      VERBOSE2: console.log("change", event);
+      setColorIsDarkMode(REGULAR_COLOR, event.matches);
+    });
+  })();
 } else {
   // Chrome needs an offscreen document to detect dark mode.
   chrome.runtime.onMessage.addListener((message) => {
-    VERBOSE2: console.log('onMessage', message)
-    if (message.hasOwnProperty('darkModeOffscreen')) {
-      VERBOSE2: console.log('onMessage', message)
-      VERBOSE2: console.log('setColorIsDarkMode', message.darkModeOffscreen)
-      setColorIsDarkMode(REGULAR_COLOR, message.darkModeOffscreen)
+    VERBOSE2: console.log("onMessage", message);
+    if (message.hasOwnProperty("darkModeOffscreen")) {
+      VERBOSE2: console.log("onMessage", message);
+      VERBOSE2: console.log("setColorIsDarkMode", message.darkModeOffscreen);
+      setColorIsDarkMode(REGULAR_COLOR, message.darkModeOffscreen);
     }
-  })
+  });
 
-  ;(async () => {
-    await optionsReady
+  (async () => {
+    await optionsReady;
     try {
       await chrome.offscreen.createDocument({
-        url: 'detectdarkmode.html',
+        url: "detectdarkmode.html",
         reasons: ['MATCH_MEDIA'],
         justification: 'detect light/dark mode for icon colors',
-      })
+      });
     } catch {
-      VERBOSE1: console.log('detectdarkmode failed!')
+      VERBOSE1: console.log("detectdarkmode failed!");
     }
     // The offscreen document can't provide darkMode updates, so kill it now.
     // We will still get updates from the popup windows when visible.
     try {
-      await chrome.offscreen.closeDocument()
+      await chrome.offscreen.closeDocument();
     } catch {
       // ignore
     }
-  })()
+  })();
 }
 
 // Must "await storageReady;" before reading maps.
 // You can force initStorage() from the console for debugging purposes.
 const initStorage = async () => {
-  await spriteImgReady
-  await optionsReady
+  await spriteImgReady;
+  await optionsReady;
 
   // These are be no-ops unless initStorage() is called manually.
-  clearMap(tabMap)
-  clearMap(requestMap)
-  if (ipCache) clearMap(ipCache)
+  clearMap(tabMap);
+  clearMap(requestMap);
+  if (ipCache) clearMap(ipCache);
 
-  const items = await chrome.storage.session.get()
-  const unparseable = []
+  const items = await chrome.storage.session.get();
+  const unparseable = [];
   for (const [k, v] of Object.entries(items)) {
     if (!(tabMap.load(k, v) || requestMap.load(k, v) || ipCache?.load(k, v))) {
-      unparseable.push(k)
+      unparseable.push(k);
     }
   }
   if (unparseable.length) {
-    console.error('skipped unparseable keys:', unparseable)
+    console.error("skipped unparseable keys:", unparseable);
   }
   // Reconsitute the DomainInfo objects and connection counts.
   for (const tabInfo of Object.values(tabMap)) {
-    tabInfo.afterLoad()
+    tabInfo.afterLoad();
   }
   for (const requestInfo of Object.values(requestMap)) {
-    requestInfo.afterLoad()
+    requestInfo.afterLoad();
   }
   if (ipCache) {
-    ipCacheSize = Object.keys(ipCache).length
+    ipCacheSize = Object.keys(ipCache).length;
   }
-}
-const storageReady = initStorage()
+};
+const storageReady = initStorage();
 
 // -- Popups --
 
@@ -824,7 +798,7 @@ const storageReady = initStorage()
 // and streams changes to them as they occur.
 class Popups {
   /** @type {Record<string, chrome.runtime.Port>} */
-  ports = newMap() // tabId -> Port
+  ports = newMap();  // tabId -> Port
 
   /**
    * @param {string} tabId
@@ -832,11 +806,11 @@ class Popups {
    */
   sendMessage(tabId, data) {
     try {
-      this.ports[tabId]?.postMessage(data)
+      this.ports[tabId]?.postMessage(data);
     } catch (err) {
-      VERBOSE2: console.error('sendMessage', 'port', tabId, err)
+      VERBOSE2: console.error("sendMessage", "port", tabId, err);
     }
-  }
+  };
 
   /**
    * @param {string} tabId
@@ -844,14 +818,11 @@ class Popups {
    */
   onMessage(tabId, msg) {
     VERBOSE3: console.log(
-      'Popups.onMessage',
-      'tabId',
-      tabId,
-      'cmd',
-      msg.cmd,
-      'originalMsg',
-      msg.msg
-    )
+      "Popups.onMessage",
+      "tabId", tabId,
+      "cmd", msg.cmd,
+      "originalMsg", msg.msg,
+    );
   }
 
   // Attach a new popup window, and start sending it updates.
@@ -859,46 +830,34 @@ class Popups {
    * @param {chrome.runtime.Port} port
    */
   attachPort(port) {
-    const tabId = port.name
-    this.ports[tabId] = port
-    VERBOSE3: console.log('attachPort', 'ports', Object.keys(this.ports))
-    VERBOSE3: port.onMessage.addListener((msg) => this.onMessage(tabId, msg))
-    tabMap[tabId]?.pushAll()
-  }
+    const tabId = port.name;
+    this.ports[tabId] = port;
+    VERBOSE3: console.log("attachPort", "ports", Object.keys(this.ports));
+    VERBOSE3: port.onMessage.addListener((msg) => this.onMessage(tabId, msg));
+    tabMap[tabId]?.pushAll();
+  };
 
   /**
-   *
-   * @param {chrome.runtime.Port} port
+   * 
+   * @param {chrome.runtime.Port} port 
    */
   detachPort(port) {
-    const tabId = port.name
-    VERBOSE3: port.onMessage.removeListener((msg) => this.onMessage(tabId, msg))
-    port.disconnect()
-    delete this.ports[tabId]
-  }
+    const tabId = port.name;
+    VERBOSE3: port.onMessage.removeListener((msg) => this.onMessage(tabId, msg));
+    port.disconnect();
+    delete this.ports[tabId];
+  };
 
   pushAll(tabId, tuples, pattern, color, spillCount) {
-    VERBOSE4: console.log(
-      'pushAll',
-      'tabId',
-      tabId,
-      'tuples',
-      tuples,
-      'pattern',
-      pattern,
-      'color',
-      color,
-      'spillCount',
-      spillCount
-    )
+    VERBOSE4: console.log("pushAll", "tabId", tabId, "tuples", tuples, "pattern", pattern, "color", color, "spillCount", spillCount);
     this.sendMessage(tabId, {
-      cmd: 'pushAll',
+      cmd: "pushAll",
       tuples: tuples,
       pattern: pattern,
       color: color,
       spillCount: spillCount,
-    })
-  }
+    });
+  };
 
   /**
    * @param {string} tabId
@@ -906,93 +865,71 @@ class Popups {
    */
   pushOne(tabId, tuple) {
     if (!tuple) {
-      return
+      return;
     }
 
-    // Build [domain, addr, version, flags] tuple, for a popup.
+  // Build [domain, addr, version, flags] tuple, for a popup.
 
     VERBOSE4: console.log(
-      'pushOne',
-      'tabId',
-      tabId,
-      'domain',
-      tuple[0],
-      'addr',
-      tuple[1],
-      'version',
-      tuple[2],
-      'flags',
-      tuple[3]
-    )
+      "pushOne", "tabId", tabId, "domain", tuple[0], "addr", tuple[1], "version", tuple[2], "flags", tuple[3]);
     this.sendMessage(tabId, {
-      cmd: 'pushOne',
+      cmd: "pushOne",
       tuple: tuple,
-    })
-  }
+    });
+  };
 
   pushPattern(tabId, pattern, color) {
-    VERBOSE4: console.log(
-      'pushPattern',
-      'tabId',
-      tabId,
-      'pattern',
-      pattern,
-      'color',
-      color
-    )
+    
+    VERBOSE4: console.log("pushPattern", "tabId", tabId, "pattern", pattern, "color", color);
     this.sendMessage(tabId, {
-      cmd: 'pushPattern',
+      cmd: "pushPattern",
       pattern: pattern,
       color: color,
-    })
-  }
+    });
+  };
 
   pushSpillCount(tabId, count) {
-    VERBOSE4: console.log('pushSpillCount', 'tabId', tabId, 'count', count)
+    VERBOSE4: console.log("pushSpillCount", "tabId", tabId, "count", count);
     this.sendMessage(tabId, {
-      cmd: 'pushSpillCount',
+      cmd: "pushSpillCount",
       spillCount: count,
-    })
-  }
+    });
+  };
 
   shake(tabId) {
-    VERBOSE2: console.log('shake', 'tabId', tabId)
+    VERBOSE2: console.log("shake", "tabId", tabId);
     this.sendMessage(tabId, {
-      cmd: 'shake',
-    })
+      cmd: "shake",
+    });
   }
 
   relayLog(message) {
     for (const tabId of Object.keys(this.ports)) {
       this.sendMessage(tabId, {
-        cmd: 'relayLog',
+        cmd: "relayLog",
         message: message,
-      })
+      });
     }
   }
 }
 
-const popups = new Popups()
+const popups = new Popups();
 
-chrome.runtime.onConnect.addListener(
-  wrap(async (port) => {
-    await storageReady
-    popups.attachPort(port)
-    port.onDisconnect.addListener(() => {
-      popups.detachPort(port)
-    })
-  })
-)
+chrome.runtime.onConnect.addListener(wrap(async (port) => {
+  await storageReady;
+  popups.attachPort(port);
+  port.onDisconnect.addListener(() => {
+    popups.detachPort(port);
+  });
+}));
 
 // Refresh icons after chrome.runtime.reload()
-chrome.runtime.onInstalled.addListener(
-  wrap(async () => {
-    await storageReady
-    for (const tabInfo of Object.values(tabMap)) {
-      tabInfo.refreshPageAction()
-    }
-  })
-)
+chrome.runtime.onInstalled.addListener(wrap(async () => {
+  await storageReady;
+  for (const tabInfo of Object.values(tabMap)) {
+    tabInfo.refreshPageAction();
+  }
+}));
 
 // -- TabTracker --
 
@@ -1009,71 +946,65 @@ chrome.runtime.onInstalled.addListener(
 // Once a tab has become visible, then hopefully we can rely on the onRemoved
 // event to fire sometime in the future, when the user closes it.
 class TabTracker {
-  tabSet = newMap() // Set of all known tabIds
+  tabSet = newMap();  // Set of all known tabIds
 
   constructor() {
-    chrome.tabs.onCreated.addListener(
-      wrap(async (tab) => {
-        await storageReady
-        this.#addTab(tab.id, 'onCreated')
-      })
-    )
-    chrome.tabs.onRemoved.addListener(
-      wrap(async (tabId) => {
-        await storageReady
-        this.#removeTab(tabId, 'onRemoved')
-      })
-    )
-    chrome.tabs.onReplaced.addListener(
-      wrap(async (addId, removeId) => {
-        await storageReady
-        this.#removeTab(removeId, 'onReplaced')
-        this.#addTab(addId, 'onReplaced')
-      })
-    )
-    this.#pollAllTabs()
+    chrome.tabs.onCreated.addListener(wrap(async (tab) => {
+      await storageReady;
+      this.#addTab(tab.id, "onCreated");
+    }));
+    chrome.tabs.onRemoved.addListener(wrap(async (tabId) => {
+      await storageReady;
+      this.#removeTab(tabId, "onRemoved");
+    }));
+    chrome.tabs.onReplaced.addListener(wrap(async (addId, removeId) => {
+      await storageReady;
+      this.#removeTab(removeId, "onReplaced");
+      this.#addTab(addId, "onReplaced");
+    }));
+    this.#pollAllTabs();
   }
 
   exists(tabId) {
-    return !!this.tabSet[tabId]
+    return !!this.tabSet[tabId];
   }
 
   // Every 5 minutes (or after a service_worker restart),
   // poke any tabs that have become out of sync.
   async #pollAllTabs() {
-    await storageReady // load 'born' timestamps first.
+    await storageReady;  // load 'born' timestamps first.
     while (true) {
-      const result = await chrome.tabs.query({})
-      this.tabSet = newMap()
+      const result = await chrome.tabs.query({});
+      this.tabSet = newMap();
       for (const tab of result) {
-        this.#addTab(tab.id, 'pollAlltabs')
+        this.#addTab(tab.id, "pollAlltabs")
       }
       for (const tabId of Object.keys(tabMap)) {
         if (!this.tabSet[tabId]) {
-          this.#removeTab(tabId, 'pollAllTabs')
+          this.#removeTab(tabId, "pollAllTabs");
         }
       }
-      await sleep(300 * SECONDS)
+      await sleep(300 * SECONDS);
     }
   }
 
   #addTab(tabId, logText) {
-    VERBOSE3: console.log('addTab', tabId, logText)
-    this.tabSet[tabId] = true
-    tabMap[tabId]?.makeAlive()
+    VERBOSE3: console.log("addTab", tabId, logText);
+    this.tabSet[tabId] = true;
+    tabMap[tabId]?.makeAlive();
   }
 
   #removeTab(tabId, logText) {
-    VERBOSE3: console.log('removeTab', tabId, logText)
-    delete this.tabSet[tabId]
+    VERBOSE3: console.log("removeTab", tabId, logText);
+    delete this.tabSet[tabId];
     if (tabMap[tabId]?.tooYoungToDie()) {
-      return
+      return;
     }
-    tabMap.remove(tabId)
+    tabMap.remove(tabId);
   }
 }
 
-const tabTracker = new TabTracker()
+const tabTracker = new TabTracker();
 
 // -- webNavigation --
 
@@ -1086,263 +1017,229 @@ const tabTracker = new TabTracker()
 //
 // Conveniently, this also ensures that the previous page data is cleared
 // when navigating to a file://, chrome://, or Chrome Web Store URL.
-chrome.webNavigation.onBeforeNavigate.addListener(
-  wrap(async (details) => {
-    if (!(details.frameId == 0 && details.tabId > 0)) {
-      return
-    }
-    await storageReady
-    let tabInfo = tabMap[details.tabId]
-    const requestInfo = requestMap[tabInfo?.mainRequestId]
-    if (requestInfo && requestInfo.domain == null) {
-      return // Typical no-op case.
-    }
-    VERBOSE3: console.log(
-      `tabId=${details.tabId} is a service worker or special URL`
-    )
-    const parsed = parseUrl(details.url)
-    tabMap.remove(details.tabId)
-    tabInfo = tabMap.lookupOrNew(details.tabId)
-    tabInfo.setInitialDomain(-1, parsed.domain, parsed.origin)
-  })
-)
+chrome.webNavigation.onBeforeNavigate.addListener(wrap(async (details) => {
+  if (!(details.frameId == 0 && details.tabId > 0)) {
+    return;
+  }
+  await storageReady;
+  let tabInfo = tabMap[details.tabId];
+  const requestInfo = requestMap[tabInfo?.mainRequestId];
+  if (requestInfo && requestInfo.domain == null) {
+    return;  // Typical no-op case.
+  }
+  VERBOSE3: console.log(`tabId=${details.tabId} is a service worker or special URL`);
+  const parsed = parseUrl(details.url);
+  tabMap.remove(details.tabId);
+  tabInfo = tabMap.lookupOrNew(details.tabId);
+  tabInfo.setInitialDomain(-1, parsed.domain, parsed.origin);
+}));
 
-chrome.webNavigation.onCommitted.addListener(
-  wrap(async (details) => {
-    VERBOSE3: console.log('wN.oC', details?.tabId, details?.url, details)
-    await storageReady
-    if (details.frameId != 0) {
-      return
-    }
-    const parsed = parseUrl(details.url)
-    const tabInfo = tabMap.lookupOrNew(details.tabId)
-    tabInfo.setCommitted(parsed.domain, parsed.origin)
-  })
-)
+chrome.webNavigation.onCommitted.addListener(wrap(async (details) => {
+  VERBOSE3: console.log("wN.oC", details?.tabId, details?.url, details);
+  await storageReady;
+  if (details.frameId != 0) {
+    return;
+  }
+  const parsed = parseUrl(details.url);
+  const tabInfo = tabMap.lookupOrNew(details.tabId);
+  tabInfo.setCommitted(parsed.domain, parsed.origin);
+}));
 
 // -- tabs --
 
 // Whenever anything tab-related happens, try to refresh the pageAction.  This
 // is hacky and inefficient, but the back-stabbing browser leaves me no choice.
 // This seems to fix http://crbug.com/124970 and some problems on Google+.
-chrome.tabs.onUpdated.addListener(
-  wrap(async (tabId, changeInfo, tab) => {
-    VERBOSE4: console.log('tabs.oU', tabId)
-    await storageReady
-    const tabInfo = tabMap[tabId]
-    if (tabInfo) {
-      tabInfo.color = tab.incognito ? INCOGNITO_COLOR : REGULAR_COLOR
-      tabInfo.refreshPageAction()
-    }
-  })
-)
+chrome.tabs.onUpdated.addListener(wrap(async (tabId, changeInfo, tab) => {
+  VERBOSE4: console.log("tabs.oU", tabId);
+  await storageReady;
+  const tabInfo = tabMap[tabId];
+  if (tabInfo) {
+    tabInfo.color = tab.incognito ? INCOGNITO_COLOR : REGULAR_COLOR;
+    tabInfo.refreshPageAction();
+  }
+}));
 
 // -- webRequest --
 
-chrome.webRequest.onBeforeRequest.addListener(
-  wrap(async (details) => {
-    VERBOSE3: console.log('wR.oBR', details?.tabId, details?.url, details)
-    await storageReady
-    const tabId = details.tabId
-    const tabInfos = []
-    if (tabId > 0) {
-      if (await isMainTabUrl(details)) {
-        const parsed = parseUrl(details.url)
-        tabMap.remove(tabId)
-        const tabInfo = tabMap.lookupOrNew(tabId)
-        tabInfo.setInitialDomain(
-          details.requestId,
-          parsed.domain,
-          parsed.origin
-        )
-        tabInfos.push(tabInfo)
-      } else {
-        const tabInfo = tabMap[tabId]
-        if (tabInfo) {
-          tabInfos.push(tabInfo)
-        }
-      }
-    } else if (tabId == -1 && (details.initiator || details.documentUrl)) {
-      // Chrome uses initiator, Firefox uses documentUrl.
-      const initiator =
-        details.initiator || parseUrl(details.documentUrl).origin
-      // Request is from a tabless Service Worker.
-      // Find all tabs matching the initiator's origin.
-      for (const tabId of lookupOriginMap(initiator)) {
-        const tabInfo = tabMap[tabId]
-        if (tabInfo) {
-          tabInfos.push(tabInfo)
-        }
+chrome.webRequest.onBeforeRequest.addListener(wrap(async (details) => {
+  VERBOSE3: console.log("wR.oBR", details?.tabId, details?.url, details);
+  await storageReady;
+  const tabId = details.tabId;
+  const tabInfos = [];
+  if (tabId > 0) {
+    if (await isMainTabUrl(details)) {
+      const parsed = parseUrl(details.url);
+      tabMap.remove(tabId);
+      const tabInfo = tabMap.lookupOrNew(tabId);
+      tabInfo.setInitialDomain(details.requestId, parsed.domain, parsed.origin);
+      tabInfos.push(tabInfo);
+    } else {
+      const tabInfo = tabMap[tabId];
+      if (tabInfo) {
+        tabInfos.push(tabInfo);
       }
     }
-    if (!tabInfos.length) {
-      return
+  } else if (tabId == -1 && (details.initiator || details.documentUrl)) {
+    // Chrome uses initiator, Firefox uses documentUrl.
+    const initiator = details.initiator || parseUrl(details.documentUrl).origin;
+    // Request is from a tabless Service Worker.
+    // Find all tabs matching the initiator's origin.
+    for (const tabId of lookupOriginMap(initiator)) {
+      const tabInfo = tabMap[tabId];
+      if (tabInfo) {
+        tabInfos.push(tabInfo);
+      }
     }
-    const requestInfo = requestMap.lookupOrNew(details.requestId)
-    if (requestInfo.tabIdToBorn.size || requestInfo.domain) {
-      // Can this actually happen?
-      console.error('duplicate request; connection count leak')
-    }
-    for (const tabInfo of tabInfos) {
-      requestInfo.tabIdToBorn[tabInfo.id()] = tabInfo.born
-    }
-    requestInfo.domain = null
-    requestInfo.save()
-  }),
-  FILTER_ALL_URLS
-)
+  }
+  if (!tabInfos.length) {
+    return;
+  }
+  const requestInfo = requestMap.lookupOrNew(details.requestId);
+  if (requestInfo.tabIdToBorn.size || requestInfo.domain) {
+    // Can this actually happen?
+    console.error("duplicate request; connection count leak");
+  }
+  for (const tabInfo of tabInfos) {
+    requestInfo.tabIdToBorn[tabInfo.id()] = tabInfo.born;
+  }
+  requestInfo.domain = null;
+  requestInfo.save();
+}), FILTER_ALL_URLS);
 
 // In the event of a redirect, the mainOrigin may change
 // (from http: to https:) between the onBeforeRequest and onCommitted events,
 // triggering an "access denied" error.  Patch this from onBeforeRedirect.
 //
 // As of 2022, this can be tested by visiting http://maps.google.com/
-chrome.webRequest.onBeforeRedirect.addListener(
-  wrap(async (details) => {
-    await storageReady
-    if (!(await isMainTabUrl(details))) {
-      return
-    }
-    const requestInfo = requestMap[details.requestId]
-    if (!requestInfo) {
-      return
-    }
-    for (const [tabId, tabBorn] of Object.entries(requestInfo.tabIdToBorn)) {
-      const tabInfo = tabMap[tabId]
-      if (tabInfo?.born != tabBorn) {
-        continue
-      }
-      if (tabInfo.committed) {
-        console.error('onCommitted before onBeforeRedirect!')
-        continue
-      }
-      const parsed = parseUrl(details.redirectUrl)
-      tabInfo.setInitialDomain(requestInfo.id(), parsed.domain, parsed.origin)
-    }
-  }),
-  FILTER_ALL_URLS
-)
-
-chrome.webRequest.onResponseStarted.addListener(
-  wrap(async (details) => {
-    VERBOSE2: !isSafari &&
-      console.log(
-        'wR.oRS',
-        details?.tabId,
-        details?.requestId,
-        new URL(details?.url).hostname,
-        details?.ip,
-        'type',
-        details.type
-      )
-    await storageReady
-    const requestInfo = requestMap[details.requestId]
-    VERBOSE2: console.log('wR.oRS.requestInfo', requestInfo)
-    if (!requestInfo) {
-      return
-    }
-    const tabInfos = []
-    for (const [tabId, tabBorn] of Object.entries(requestInfo.tabIdToBorn)) {
-      const tabInfo = tabMap[tabId]
-      if (tabInfo?.born != tabBorn) {
-        continue
-      }
-      tabInfos.push(tabInfo)
-    }
-    if (!tabInfos.length) {
-      return
-    }
-    const parsed = parseUrl(details.url)
-    if (!parsed.domain) {
-      return
-    }
-
-    let addr = details.ip
-    let fromCache = details.fromCache
-
-    // If no IP address is available and we have a domain
-    // try asking the Swift app for the IP address
-    // This will use system resolvers, maintaing privacy
-    // and respecting local DNS settings.
-    // in Safari, IP is never returned in details
-    // likely due to Apple's stance on privacy
-    // https://github.com/pmarks-net/ipvfoo/issues/39
-    if (!addr && isSafari) {
-      addr = await lookupDomainNative(parsed.domain)
-      VERBOSE2: console.log(
-        'wR.oRS',
-        details?.tabId,
-        details?.requestId,
-        parsed.domain,
-        addr,
-        'type',
-        details.type
-      )
-    }
-
-    if (!fromCache) {
-      updateNAT64(parsed.domain, addr)
-    }
-
-    if (ipCache) {
-      // This runs on Firefox only.
-      if (addr) {
-        const cachedAddr = ipCache.lookupOrNew(parsed.domain)
-        const grew = !cachedAddr.addr
-        cachedAddr.time = Date.now()
-        cachedAddr.addr = addr
-        cachedAddr.save()
-        if (grew) {
-          ipCacheGrew()
-        }
-      } else {
-        const cachedAddr = ipCache[parsed.domain]
-        if (cachedAddr) {
-          fromCache = true
-          addr = cachedAddr.addr
-        }
-      }
-    }
-
-    addr = reformatForNAT64(addr) || '(no address)'
-
-    let flags = parsed.ssl ? FLAG_SSL : FLAG_NOSSL
-    if (parsed.ws) {
-      flags |= FLAG_WEBSOCKET
-    }
-    if (!fromCache) {
-      flags |= FLAG_UNCACHED
-    }
-    if (details.tabId > 0) {
-      flags |= FLAG_NOTWORKER
-    }
-    if (requestInfo.domain)
-      throw `Duplicate onResponseStarted: ${parsed.domain}`
-    requestInfo.domain = parsed.domain
-    requestInfo.save()
-    VERBOSE2: console.log('tabInfos', tabInfos)
-    for (const tabInfo of tabInfos) {
-      tabInfo.addDomain(parsed.domain, addr, flags)
-    }
-  }),
-  FILTER_ALL_URLS
-)
-
-const forgetRequest = wrap(async (details) => {
-  await storageReady
-  const requestInfo = requestMap.remove(details.requestId)
-  if (!requestInfo?.domain) {
-    return
+chrome.webRequest.onBeforeRedirect.addListener(wrap(async (details) => {
+  await storageReady;
+  if (!(await isMainTabUrl(details))) {
+    return;
+  }
+  const requestInfo = requestMap[details.requestId];
+  if (!requestInfo) {
+    return;
   }
   for (const [tabId, tabBorn] of Object.entries(requestInfo.tabIdToBorn)) {
-    const tabInfo = tabMap[tabId]
-    if (tabInfo?.born == tabBorn) {
-      tabInfo.domains[requestInfo.domain]?.countDown()
+    const tabInfo = tabMap[tabId];
+    if (tabInfo?.born != tabBorn) {
+      continue;
+    }
+    if (tabInfo.committed) {
+      console.error("onCommitted before onBeforeRedirect!");
+      continue;
+    }
+    const parsed = parseUrl(details.redirectUrl);
+    tabInfo.setInitialDomain(requestInfo.id(), parsed.domain, parsed.origin);
+  }
+
+}), FILTER_ALL_URLS);
+
+chrome.webRequest.onResponseStarted.addListener(wrap(async (details) => {
+  VERBOSE2: !isSafari && console.log(
+    "wR.oRS", details?.tabId,
+    details?.requestId,
+    new URL(details?.url).hostname,
+    details?.ip, "type", details.type);
+  await storageReady;
+  const requestInfo = requestMap[details.requestId];
+  VERBOSE2: console.log("wR.oRS.requestInfo", requestInfo);
+  if (!requestInfo) {
+    return;
+  }
+  const tabInfos = [];
+  for (const [tabId, tabBorn] of Object.entries(requestInfo.tabIdToBorn)) {
+    const tabInfo = tabMap[tabId];
+    if (tabInfo?.born != tabBorn) {
+      continue;
+    }
+    tabInfos.push(tabInfo);
+  }
+  if (!tabInfos.length) {
+    return;
+  }
+  const parsed = parseUrl(details.url);
+  if (!parsed.domain) {
+    return;
+  }
+
+  let addr = details.ip;
+  let fromCache = details.fromCache;
+
+  // If no IP address is available and we have a domain
+  // try asking the Swift app for the IP address
+  // This will use system resolvers, maintaing privacy 
+  // and respecting local DNS settings.
+  // in Safari, IP is never returned in details
+  // likely due to Apple's stance on privacy
+  // https://github.com/pmarks-net/ipvfoo/issues/39
+  if (!addr && isSafari) {
+    addr = await lookupDomainNative(parsed.domain);
+    VERBOSE2: console.log(
+      "wR.oRS", details?.tabId, details?.requestId, parsed.domain, addr, "type", details.type);
+  }
+
+  if (!fromCache) {
+    updateNAT64(parsed.domain, addr);
+  }
+
+  if (ipCache) {
+    // This runs on Firefox only.
+    if (addr) {
+      const cachedAddr = ipCache.lookupOrNew(parsed.domain);
+      const grew = !cachedAddr.addr;
+      cachedAddr.time = Date.now();
+      cachedAddr.addr = addr;
+      cachedAddr.save();
+      if (grew) {
+        ipCacheGrew();
+      }
+    } else {
+      const cachedAddr = ipCache[parsed.domain];
+      if (cachedAddr) {
+        fromCache = true;
+        addr = cachedAddr.addr;
+      }
     }
   }
-})
-chrome.webRequest.onCompleted.addListener(forgetRequest, FILTER_ALL_URLS)
-chrome.webRequest.onErrorOccurred.addListener(forgetRequest, FILTER_ALL_URLS)
+
+  addr = reformatForNAT64(addr) || "(no address)";
+
+  let flags = parsed.ssl ? FLAG_SSL : FLAG_NOSSL;
+  if (parsed.ws) {
+    flags |= FLAG_WEBSOCKET;
+  }
+  if (!fromCache) {
+    flags |= FLAG_UNCACHED;
+  }
+  if (details.tabId > 0) {
+    flags |= FLAG_NOTWORKER;
+  }
+  if (requestInfo.domain) throw `Duplicate onResponseStarted: ${parsed.domain}`;
+  requestInfo.domain = parsed.domain;
+  requestInfo.save();
+  VERBOSE2: console.log("tabInfos", tabInfos);
+  for (const tabInfo of tabInfos) {
+    tabInfo.addDomain(parsed.domain, addr, flags);
+  }
+}), FILTER_ALL_URLS);
+
+const forgetRequest = wrap(async (details) => {
+  await storageReady;
+  const requestInfo = requestMap.remove(details.requestId);
+  if (!requestInfo?.domain) {
+    return;
+  }
+  for (const [tabId, tabBorn] of Object.entries(requestInfo.tabIdToBorn)) {
+    const tabInfo = tabMap[tabId];
+    if (tabInfo?.born == tabBorn) {
+      tabInfo.domains[requestInfo.domain]?.countDown();
+    }
+  }
+});
+chrome.webRequest.onCompleted.addListener(forgetRequest, FILTER_ALL_URLS);
+chrome.webRequest.onErrorOccurred.addListener(forgetRequest, FILTER_ALL_URLS);
 
 // -- contextMenus --
 
@@ -1353,56 +1250,54 @@ chrome.webRequest.onErrorOccurred.addListener(forgetRequest, FILTER_ALL_URLS)
 //
 // Unless http://crbug.com/60758 gets resolved, the context menu's appearance
 // cannot vary based on content.
-const MENU_ID = 'ipvfoo-lookup'
+const MENU_ID = "ipvfoo-lookup";
 
 chrome.contextMenus?.removeAll(() => {
   chrome.contextMenus.create({
-    title: 'Look up on bgp.he.net',
+    title: "Look up on bgp.he.net",
     id: MENU_ID,
     // Scope the menu to text selection in our popup windows.
-    contexts: ['selection'],
-    documentUrlPatterns: [chrome.runtime.getURL('popup.html')],
-  })
-})
+    contexts: ["selection"],
+    documentUrlPatterns: [chrome.runtime.getURL("popup.html")],
+  });
+});
 
 chrome.contextMenus?.onClicked.addListener((info, tab) => {
-  if (info.menuItemId != MENU_ID) return
-  const text = info.selectionText
+  if (info.menuItemId != MENU_ID) return;
+  const text = info.selectionText;
   if (IP4_CHARS.test(text) || IP6_CHARS.test(text)) {
     // bgp.he.net doesn't support dotted IPv6 addresses.
-    chrome.tabs.create({
-      url: `https://bgp.he.net/ip/${reformatForNAT64(text, false)}`,
-    })
+    chrome.tabs.create({ url: `https://bgp.he.net/ip/${reformatForNAT64(text, false)}` });
   } else if (DNS_CHARS.test(text)) {
-    chrome.tabs.create({ url: `https://bgp.he.net/dns/${text}` })
+    chrome.tabs.create({ url: `https://bgp.he.net/dns/${text}` });
   } else {
     // Malformed selection; shake the popup content.
-    const tabId = /#(\d+)$/.exec(info.pageUrl)
+    const tabId = /#(\d+)$/.exec(info.pageUrl);
     if (tabId) {
-      popups.shake(Number(tabId[1]))
+      popups.shake(Number(tabId[1]));
     }
   }
-})
+});
 
 watchOptions(async (optionsChanged) => {
-  await storageReady
-  optionsChanged = new Set(optionsChanged)
+  await storageReady;
+  optionsChanged = new Set(optionsChanged);
   for (const tabInfo of Object.values(tabMap)) {
-    let refreshPageAction = optionsChanged.has(tabInfo.color)
+    let refreshPageAction = optionsChanged.has(tabInfo.color);
     if (optionsChanged.has(NAT64_KEY)) {
       for (const [domain, di] of Object.entries(tabInfo.domains)) {
-        const newAddr = reformatForNAT64(di.addr)
+        const newAddr = reformatForNAT64(di.addr);
         if (di.addr != newAddr) {
-          di.addr = newAddr
-          tabInfo.pushOne(domain)
-          refreshPageAction = true
+          di.addr = newAddr;
+          tabInfo.pushOne(domain);
+          refreshPageAction = true;
         }
       }
     }
     if (refreshPageAction) {
-      tabInfo.refreshPageAction()
+      tabInfo.refreshPageAction();
     }
   }
-})
+});
 
-VERBOSE3: console.log('background.js loaded')
+VERBOSE3: console.log("background.js loaded");
