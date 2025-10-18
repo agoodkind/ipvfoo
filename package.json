@@ -9,10 +9,12 @@
     "build:firefox": "node build.mjs --targets firefox",
     "build:chrome": "node build.mjs --targets chrome",
     "build:safari": "node build.mjs --targets safari",
+    "build:xcode": "node build.mjs --xcode",
     "watch": "node build.mjs --watch",
     "watch:firefox": "node build.mjs --watch --targets firefox",
     "watch:chrome": "node build.mjs --watch --targets chrome",
-    "watch:safari": "node build.mjs --watch --targets safari"
+    "watch:safari": "node build.mjs --watch --targets safari",
+    "watch:xcode": "node build.mjs --watch --xcode"
   },
   "keywords": [],
   "author": "",

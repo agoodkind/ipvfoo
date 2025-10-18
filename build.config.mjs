@@ -1,7 +1,7 @@
 // Browser target configurations
 // Each browser has its own manifest and output directory
 
-export const browsers = ["chrome", "firefox", "safari"]
+export const browsers = ["chrome", "firefox", "safari", "xcode"]
 
 /** @type {Record<string, {outDir: string, manifest: string}>} */
 export const browserTargets = {
@@ -15,6 +15,10 @@ export const browserTargets = {
   },
   safari: {
     outDir: "dist/safari",
+    manifest: "manifest/safari-manifest.json",
+  },
+  xcode: {
+    outDir: "safari/Shared (Extension)/Resources",
     manifest: "src/manifest.json",
   },
 }

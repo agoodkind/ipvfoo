@@ -15,6 +15,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 const isDev = process.env.BUILD_ENV === "development"
+const isProduction = process.env.BUILD_ENV === "production"
 
 /**
  * Get the current Git commit SHA
@@ -89,6 +90,17 @@ async function copyStatic(browserName) {
   // Copy and format manifest
   const manifestPath = resolve(__dirname, target.manifest)
   const manifest = JSON.parse(await readFile(manifestPath, "utf-8"))
+  
+  // For Xcode, update manifest for Safari Web Extension format
+  if (browserName === "xcode") {
+    // Ensure proper Safari Web Extension configuration
+    manifest.background = manifest.background || {}
+    if (manifest.background.service_worker) {
+      manifest.background.scripts = [manifest.background.service_worker]
+      delete manifest.background.service_worker
+    }
+  }
+  
   await writeFile(
     resolve(outDir, "manifest.json"),
     JSON.stringify(manifest, null, 2),
@@ -110,8 +122,14 @@ const createBuildOptions = async (browserName) => {
     bundle: true,
     outdir: target.outDir,
     outbase: "src",
-    minify: !isDev,
-    sourcemap: isDev ? "inline" : true,
+    minify: isProduction,
+    minifyWhitespace: isProduction,
+    minifySyntax: isProduction,
+    minifyIdentifiers: isProduction,
+    keepNames: !isProduction,
+    treeShaking: true,
+    sourcemap: isProduction ? false : "inline",
+    legalComments: "inline",
     logLevel: isDev ? "debug" : "info",
     alias: dynamicAlias,
     define: {
@@ -122,17 +140,18 @@ const createBuildOptions = async (browserName) => {
       "process.env.BUILD_TS": JSON.stringify(new Date().toString()),
       "process.env.COMMIT_SHA": JSON.stringify(commitSha),
     },
-    format: "esm",
     platform: "browser",
     target: ["es2020"],
     loader: {
-      ".png": "file",
+      ".png": "dataurl",
     },
   }
 }
 
 /**
  * Build a specific browser target
+ * @param {string} browserName
+ * @param {boolean} watch
  */
 async function buildBrowser(browserName, watch = false) {
   const target = browserTargets[browserName]
@@ -167,16 +186,22 @@ async function buildBrowser(browserName, watch = false) {
 
 /**
  * Execute build pipeline
- * @param {{ watch?: boolean; targets?: string[] }} opts
+ * @param {{ watch?: boolean; targets?: string[]; xcode?: boolean }} opts
+ * @returns {Promise<{ mode: "watch" | "build", contexts?: import('esbuild').BuildContext[] }>}
  */
-export async function execute({ watch = false, targets }) {
-  const selectedTargets = targets && targets.length ? targets : browsers
+export async function execute({ watch = false, targets, xcode = false }) {
+  let selectedTargets = targets && targets.length ? targets : browsers
+
+  // If xcode flag is set, build for xcode target
+  if (xcode) {
+    selectedTargets = ["xcode"]
+  }
 
   // Validate targets
   for (const target of selectedTargets) {
     if (!browserTargets[target]) {
       console.error(`Unknown target: ${target}`)
-      console.error(`Available targets: ${browsers.join(", ")}`)
+      console.error(`Available targets: ${Object.keys(browserTargets).join(", ")}`)
       process.exit(1)
     }
   }
@@ -223,6 +248,10 @@ async function main(argv = process.argv) {
     .option(
       "-t, --targets <browsers...>",
       `Build specific browsers (${browsers.join(", ")})`,
+    )
+    .option(
+      "-x, --xcode",
+      "Build for Xcode (outputs to safari/Shared (Extension)/Resources)",
     )
     .action(async (options) => {
       await execute(options)

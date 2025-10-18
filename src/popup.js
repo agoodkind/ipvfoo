@@ -13,6 +13,14 @@ import {
   setColorIsDarkMode,
   spriteImgReady
 } from "./lib/common.js";
+import graySchrodingersLockUrl from "./assets/gray_schrodingers_lock.png";
+import grayLockUrl from "./assets/gray_lock.png";
+import grayUnlockUrl from "./assets/gray_unlock.png";
+import websocketUrl from "./assets/websocket.png";
+import serviceworkerUrl from "./assets/serviceworker.png";
+import cachedArrowUrl from "./assets/cached_arrow.png";
+import snipUrl from "./assets/snip.png";
+import tableBgUrl from "./assets/1x1_808080.png";
 
 const ALL_URLS = "<all_urls>";
 const DEBUG = true;
@@ -32,6 +40,8 @@ let lastColor = "";  // regular/incognito color scheme
 window.onload = async function() {
   table = document.getElementById("addr_table");
   table.onmousedown = handleMouseDown;
+  // Set table background image from inlined PNG
+  table.style.backgroundImage = `url("${tableBgUrl}")`;
   addEventListenersForFirefoxLinks(document.body);
   await beg();
   if (IS_MOBILE) {
@@ -245,16 +255,16 @@ function makeSslImg(flags) {
   switch (flags & (FLAG_SSL | FLAG_NOSSL)) {
     case FLAG_SSL | FLAG_NOSSL:
       return makeImg(
-          "assets/gray_schrodingers_lock.png",
+          graySchrodingersLockUrl,
           "Mixture of HTTPS and non-HTTPS connections.");
     case FLAG_SSL:
       return makeImg(
-          "assets/gray_lock.png",
+          grayLockUrl,
           "Connection uses HTTPS.\n" +
           "Warning: IPvFoo does not verify the integrity of encryption.");
     default:
       return makeImg(
-          "assets/gray_unlock.png",
+          grayUnlockUrl,
           "Connection does not use HTTPS.");
   }
 }
@@ -309,15 +319,15 @@ function makeRow(isFirst, tuple) {
   cacheTd.className = `cacheTd${connectedClass}`;
   if (flags & FLAG_WEBSOCKET) {
     cacheTd.appendChild(
-        makeImg("assets/websocket.png", "WebSocket handshake; connection may still be active."));
+        makeImg(websocketUrl, "WebSocket handshake; connection may still be active."));
     cacheTd.style.paddingLeft = '6pt';
   } else if (!(flags & FLAG_NOTWORKER)) {
     cacheTd.appendChild(
-        makeImg("assets/serviceworker.png", "Service Worker request; possibly from a different tab."));
+        makeImg(serviceworkerUrl, "Service Worker request; possibly from a different tab."));
     cacheTd.style.paddingLeft = '6pt';
   } else if (!(flags & FLAG_UNCACHED)) {
     cacheTd.appendChild(
-        makeImg("assets/cached_arrow.png", "Data from cached requests only."));
+        makeImg(cachedArrowUrl, "Data from cached requests only."));
     cacheTd.style.paddingLeft = '6pt';
   } else {
     cacheTd.style.paddingLeft = '0';
@@ -350,7 +360,7 @@ function makeSnippedText(domain, keep) {
   f.appendChild(snippedText);
 
   // Add clickable "..." image.
-  const snipImg = makeImg("assets/snip.png", "");
+  const snipImg = makeImg(snipUrl, "");
   snipImg.className = "snipImg";
   const snipLink = document.createElement("a");
   snipLink.className = "snipLinkInvisible snipLinkVisible";

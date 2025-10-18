@@ -17,6 +17,8 @@ limitations under the License.
 "use strict";
 
 import {formatIPv6, parseIP} from "./iputil.js";
+import sprites16Url from "../assets/sprites16.png";
+import sprites32Url from "../assets/sprites32.png";
 
 export {formatIPv6};
 
@@ -57,18 +59,20 @@ export function removeChildren(n) {
 
 export const spriteImg = {ready: false};
 export const spriteImgReady = (async function() {
+  const spriteUrls = {
+    16: sprites16Url,
+    32: sprites32Url
+  };
+  
   for (const size of [16, 32]) {
-    const url = chrome.runtime.getURL(`assets/sprites${size}.png`);
+    const url = spriteUrls[size];
     try {
       const response = await fetch(url);
       const blob = await response.blob();
       spriteImg[size] = await createImageBitmap(blob);
     } catch (err) {
-      // Why does this sometimes fail?  My best guess is that running
-      // the unpacked extension from a ChromeOS Linux container exposes
-      // it to filesystem reliability issues. If this happens in the wild,
-      // maybe consider base64-inlining the PNGs?
-      console.error(`failed to fetch ${url}: ${err}`);
+      // Inlined PNGs should not fail, but handle gracefully
+      console.error(`failed to load sprite ${size}: ${err}`);
       spriteImg[size] = redFailImg();
     }
   }
@@ -180,6 +184,7 @@ const NAT64_DEFAULTS = new Set([
   parseIP("64:ff9b:1::").slice(0, 96/4), // RFC 8215
 ]);
 
+/** @type {((keys: string[]) => void) | null} */
 let _watchOptionsFunc = null;
 export const options = {
   ready: false,
@@ -255,7 +260,7 @@ export function watchOptions(f) {
 
 export function setColorIsDarkMode(option, isDarkMode) {
   if (!(option == REGULAR_COLOR || option == INCOGNITO_COLOR)) {
-    throw new Error("invalid color scheme", option);
+    throw new Error(`invalid color scheme: ${String(option)}`);
   }
   if (IS_MOBILE && option == INCOGNITO_COLOR) {
     // Firefox for Android, the incognito popup follows the system theme

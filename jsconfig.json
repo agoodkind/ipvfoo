@@ -13,6 +13,7 @@
   },
   "include": [
     "src/**/*.js",
+    "src/**/*.d.ts",
     "build.mjs",
     "build.config.mjs"
   ],
