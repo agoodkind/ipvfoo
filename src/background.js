@@ -798,19 +798,19 @@ const storageReady = initStorage();
 // and streams changes to them as they occur.
 class Popups {
   /** @type {Record<string, chrome.runtime.Port>} */
-  ports = newMap();  // tabId -> Port
+  ports = newMap() // tabId -> Port
 
   /**
    * @param {string} tabId
-   * @param {object} data
+   * @param {any} data
    */
   sendMessage(tabId, data) {
     try {
-      this.ports[tabId]?.postMessage(data);
+      this.ports[tabId]?.postMessage(data)
     } catch (err) {
-      VERBOSE2: console.error("sendMessage", "port", tabId, err);
+      VERBOSE2: console.error('sendMessage', 'port', tabId, err)
     }
-  };
+  }
 
   /**
    * @param {string} tabId
@@ -818,11 +818,14 @@ class Popups {
    */
   onMessage(tabId, msg) {
     VERBOSE3: console.log(
-      "Popups.onMessage",
-      "tabId", tabId,
-      "cmd", msg.cmd,
-      "originalMsg", msg.msg,
-    );
+      'Popups.onMessage',
+      'tabId',
+      tabId,
+      'cmd',
+      msg.cmd,
+      'originalMsg',
+      msg.msg
+    )
   }
 
   // Attach a new popup window, and start sending it updates.
@@ -830,85 +833,115 @@ class Popups {
    * @param {chrome.runtime.Port} port
    */
   attachPort(port) {
-    const tabId = port.name;
-    this.ports[tabId] = port;
-    VERBOSE3: console.log("attachPort", "ports", Object.keys(this.ports));
-    VERBOSE3: port.onMessage.addListener((msg) => this.onMessage(tabId, msg));
-    tabMap[tabId]?.pushAll();
-  };
+    const tabId = port.name
+    this.ports[tabId] = port
+    VERBOSE3: console.log('attachPort', 'ports', Object.keys(this.ports))
+    VERBOSE3: port.onMessage.addListener((msg) => this.onMessage(tabId, msg))
+    tabMap[tabId]?.pushAll()
+  }
 
   /**
-   * 
-   * @param {chrome.runtime.Port} port 
+   *
+   * @param {chrome.runtime.Port} port
    */
   detachPort(port) {
-    const tabId = port.name;
-    VERBOSE3: port.onMessage.removeListener((msg) => this.onMessage(tabId, msg));
-    port.disconnect();
-    delete this.ports[tabId];
-  };
+    const tabId = port.name
+    VERBOSE3: port.onMessage.removeListener((msg) => this.onMessage(tabId, msg))
+    port.disconnect()
+    delete this.ports[tabId]
+  }
 
   pushAll(tabId, tuples, pattern, color, spillCount) {
-    VERBOSE4: console.log("pushAll", "tabId", tabId, "tuples", tuples, "pattern", pattern, "color", color, "spillCount", spillCount);
+    VERBOSE4: console.log(
+      'pushAll',
+      'tabId',
+      tabId,
+      'tuples',
+      tuples,
+      'pattern',
+      pattern,
+      'color',
+      color,
+      'spillCount',
+      spillCount
+    )
     this.sendMessage(tabId, {
-      cmd: "pushAll",
+      cmd: 'pushAll',
       tuples: tuples,
       pattern: pattern,
       color: color,
       spillCount: spillCount,
-    });
-  };
+    })
+  }
 
   /**
    * @param {string} tabId
-   * @param {} tuple
+   * @param {Array} tuple
    */
   pushOne(tabId, tuple) {
     if (!tuple) {
-      return;
+      return
     }
 
-  // Build [domain, addr, version, flags] tuple, for a popup.
+    // Build [domain, addr, version, flags] tuple, for a popup.
 
     VERBOSE4: console.log(
-      "pushOne", "tabId", tabId, "domain", tuple[0], "addr", tuple[1], "version", tuple[2], "flags", tuple[3]);
+      'pushOne',
+      'tabId',
+      tabId,
+      'domain',
+      tuple[0],
+      'addr',
+      tuple[1],
+      'version',
+      tuple[2],
+      'flags',
+      tuple[3]
+    )
     this.sendMessage(tabId, {
-      cmd: "pushOne",
+      cmd: 'pushOne',
       tuple: tuple,
-    });
-  };
+    })
+  }
 
   pushPattern(tabId, pattern, color) {
-    
-    VERBOSE4: console.log("pushPattern", "tabId", tabId, "pattern", pattern, "color", color);
+    VERBOSE4: console.log(
+      'pushPattern',
+      'tabId',
+      tabId,
+      'pattern',
+      pattern,
+      'color',
+      color
+    )
     this.sendMessage(tabId, {
-      cmd: "pushPattern",
+      cmd: 'pushPattern',
       pattern: pattern,
       color: color,
-    });
-  };
+    })
+  }
 
   pushSpillCount(tabId, count) {
-    VERBOSE4: console.log("pushSpillCount", "tabId", tabId, "count", count);
+    VERBOSE4: console.log('pushSpillCount', 'tabId', tabId, 'count', count)
     this.sendMessage(tabId, {
-      cmd: "pushSpillCount",
+      cmd: 'pushSpillCount',
       spillCount: count,
-    });
-  };
+    })
+  }
 
   shake(tabId) {
-    VERBOSE2: console.log("shake", "tabId", tabId);
+    VERBOSE2: console.log('shake', 'tabId', tabId)
     this.sendMessage(tabId, {
-      cmd: "shake",
-    });
+      cmd: 'shake',
+    })
   }
 
   relayLog(message) {
     for (const tabId of Object.keys(this.ports)) {
       this.sendMessage(tabId, {
-        cmd: "relayLog",
+        cmd: 'relayLog',
         message: message,
-      });
+      })
     }
   }
 }
