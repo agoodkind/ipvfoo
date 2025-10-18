@@ -1,360 +1,411 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Domain Connectivity Test</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
-        body {
-            font-family: monospace;
-            padding: 20px;
-            margin: 0;
+      body {
+        font-family: monospace;
+        padding: 20px;
+        margin: 0;
+      }
+      .domain-test {
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        transition:
+          opacity 0.2s,
+          background-color 0.2s;
+        cursor: pointer;
+      }
+      .domain-test.disabled {
+        opacity: 0.5;
+        background-color: #f5f5f5;
+      }
+      .domain-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 5px;
+      }
+      .domain-name {
+        cursor: pointer;
+        user-select: none;
+        display: flex;
+        align-items: baseline;
+        gap: 2px;
+      }
+      .url-protocol {
+        font-size: 0.85em;
+        color: #888;
+      }
+      .url-hostname {
+        font-weight: bold;
+        font-size: 1.1em;
+      }
+      .url-path {
+        font-size: 0.85em;
+        color: #888;
+      }
+      .status {
+        color: #666;
+        margin-left: 28px;
+        min-height: 1.2em;
+      }
+      .success {
+        color: green;
+      }
+      .error {
+        color: red;
+      }
+      @keyframes flash-yellow {
+        0% {
+          background-color: rgba(255, 255, 0, 0.4);
         }
-        .domain-test {
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            transition: opacity 0.2s, background-color 0.2s;
-            cursor: pointer;
+        100% {
+          background-color: transparent;
         }
-        .domain-test.disabled {
-            opacity: 0.5;
-            background-color: #f5f5f5;
+      }
+      .flash {
+        animation: flash-yellow 0.6s ease-out;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
         }
-        .domain-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 5px;
+        100% {
+          transform: rotate(360deg);
         }
-        .domain-name {
-            cursor: pointer;
-            user-select: none;
-            display: flex;
-            align-items: baseline;
-            gap: 2px;
-        }
-        .url-protocol {
-            font-size: 0.85em;
-            color: #888;
-        }
-        .url-hostname {
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-        .url-path {
-            font-size: 0.85em;
-            color: #888;
-        }
-        .status {
-            color: #666;
-            margin-left: 28px;
-            min-height: 1.2em;
-        }
-        .success {
-            color: green;
-        }
-        .error {
-            color: red;
-        }
-        @keyframes flash-yellow {
-            0% {
-                background-color: rgba(255, 255, 0, 0.4);
-            }
-            100% {
-                background-color: transparent;
-            }
-        }
-        .flash {
-            animation: flash-yellow 0.6s ease-out;
-        }
-        .controls {
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .controls input[type="number"] {
-            padding: 5px;
-            width: 80px;
-        }
-        .controls button {
-            padding: 6px 12px;
-            cursor: pointer;
-        }
-        .controls label {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        input[type="checkbox"] {
-            cursor: pointer;
-        }
+      }
+      .spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid #ccc;
+        border-top-color: #333;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        margin-left: 8px;
+      }
+      .controls {
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .controls input[type='number'] {
+        padding: 5px;
+        width: 80px;
+      }
+      .controls button {
+        padding: 6px 12px;
+        cursor: pointer;
+      }
+      .controls label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      input[type='checkbox'] {
+        cursor: pointer;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useCallback, useRef } = React
+      const { useState, useEffect, useCallback, useRef } = React
 
-        const DOMAINS = [
-            "https://ipv4.google.com",
-            "https://ipv6.google.com",
-            "https://google.com",
-            "http://localhost:8080/ping",
-            "http://127.0.0.1:8080/ping",
-            "http://[::1]:8080/ping",
-            "http://[::ffff:127.0.0.1]:8080/ping",
-            "https://ipv4.icanhazip.com",
-            "https://ipv6.icanhazip.com",
-            "https://icanhazip.com"
-        ]
+      const DOMAINS = [
+        'https://ipv4.google.com',
+        'https://ipv6.google.com',
+        'https://google.com',
+        'http://localhost:8080/ping',
+        'http://127.0.0.1:8080/ping',
+        'http://[::1]:8080/ping',
+        'http://[::ffff:127.0.0.1]:8080/ping',
+        'https://ipv4.icanhazip.com',
+        'https://ipv6.icanhazip.com',
+        'https://icanhazip.com',
+      ]
 
-        function parseUrl(url) {
-            try {
-                const urlObj = new URL(url)
-                return {
-                    protocol: urlObj.protocol + '//',
-                    hostname: urlObj.hostname,
-                    path: urlObj.pathname + urlObj.search + urlObj.hash
-                }
-            } catch {
-                return { protocol: '', hostname: url, path: '' }
-            }
+      function parseUrl(url) {
+        try {
+          const urlObj = new URL(url)
+          return {
+            protocol: urlObj.protocol + '//',
+            hostname: urlObj.hostname,
+            path: urlObj.pathname + urlObj.search + urlObj.hash,
+          }
+        } catch {
+          return { protocol: '', hostname: url, path: '' }
+        }
+      }
+
+      function DomainTest({
+        domain,
+        enabled,
+        onToggle,
+        status,
+        onTest,
+        isLoading,
+      }) {
+        const prevMessageRef = useRef(status.message)
+        const [flashParts, setFlashParts] = useState(() =>
+          status.message
+            .split(/(\s+|[()]+)/)
+            .map((text) => ({ text, isDifferent: false }))
+        )
+        const [flashKey, setFlashKey] = useState(0)
+
+        useEffect(() => {
+          const prevMessage = prevMessageRef.current
+          const currentMessage = status.message
+
+          if (prevMessage !== currentMessage) {
+            const words = currentMessage.split(/(\s+|[()]+)/)
+            const prevWords = prevMessage.split(/(\s+|[()]+)/)
+
+            const parts = words.map((word, i) => ({
+              text: word,
+              isDifferent: word !== prevWords[i],
+            }))
+
+            setFlashParts(parts)
+            setFlashKey((prev) => prev + 1)
+            prevMessageRef.current = currentMessage
+          }
+        }, [status.message])
+
+        const handleRowClick = () => {
+          onToggle(domain)
         }
 
-        function DomainTest({ domain, enabled, onToggle, status, onTest }) {
-            const prevMessageRef = useRef(status.message)
-            const [flashParts, setFlashParts] = useState(() => 
-                status.message.split(/(\s+|[()]+)/).map(text => ({ text, isDifferent: false }))
-            )
-            const [flashKey, setFlashKey] = useState(0)
-
-            useEffect(() => {
-                const prevMessage = prevMessageRef.current
-                const currentMessage = status.message
-
-                if (prevMessage !== currentMessage) {
-                    const words = currentMessage.split(/(\s+|[()]+)/)
-                    const prevWords = prevMessage.split(/(\s+|[()]+)/)
-
-                    const parts = words.map((word, i) => ({
-                        text: word,
-                        isDifferent: word !== prevWords[i]
-                    }))
-
-                    setFlashParts(parts)
-                    setFlashKey(prev => prev + 1)
-                    prevMessageRef.current = currentMessage
-                }
-            }, [status.message])
-
-            const handleRowClick = () => {
-                onToggle(domain)
-            }
-
-            const handleCheckboxClick = (e) => {
-                e.stopPropagation()
-            }
-
-            const { protocol, hostname, path } = parseUrl(domain)
-
-            return (
-                <div className={`domain-test ${!enabled ? 'disabled' : ''}`} onClick={handleRowClick}>
-                    <div className="domain-header">
-                        <input
-                            type="checkbox"
-                            id={`checkbox-${domain}`}
-                            checked={enabled}
-                            onChange={() => onToggle(domain)}
-                            onClick={handleCheckboxClick}
-                        />
-                        <label
-                            htmlFor={`checkbox-${domain}`}
-                            className="domain-name"
-                        >
-                            <span className="url-protocol">{protocol}</span>
-                            <span className="url-hostname">{hostname}</span>
-                            {path && path !== '/' && <span className="url-path">{path}</span>}
-                        </label>
-                    </div>
-                    <div className={`status ${status.className}`}>
-                        {flashParts.map((part, i) => (
-                            <span key={`${i}-${flashKey}`} className={part.isDifferent ? 'flash' : ''}>
-                                {part.text}
-                            </span>
-                        ))}
-                    </div>
-                </div>
-            )
+        const handleCheckboxClick = (e) => {
+          e.stopPropagation()
         }
 
-        function App() {
-            const [enabledDomains, setEnabledDomains] = useState(() => {
-                const saved = localStorage.getItem('domainCheckboxStates')
-                if (saved) {
-                    return JSON.parse(saved)
-                }
-                return Object.fromEntries(DOMAINS.map(d => [d, true]))
-            })
+        const { protocol, hostname, path } = parseUrl(domain)
 
-            const [pauseTime, setPauseTime] = useState(() => {
-                const saved = localStorage.getItem('pauseTime')
-                return saved ? parseInt(saved) : 100
-            })
+        return (
+          <div
+            className={`domain-test ${!enabled ? 'disabled' : ''}`}
+            onClick={handleRowClick}
+          >
+            <div className="domain-header">
+              <input
+                type="checkbox"
+                id={`checkbox-${domain}`}
+                checked={enabled}
+                onChange={() => onToggle(domain)}
+                onClick={handleCheckboxClick}
+              />
+              <label htmlFor={`checkbox-${domain}`} className="domain-name">
+                <span className="url-protocol">{protocol}</span>
+                <span className="url-hostname">{hostname}</span>
+                {path && path !== '/' && (
+                  <span className="url-path">{path}</span>
+                )}
+              </label>
+              {isLoading && <div className="spinner"></div>}
+            </div>
+            <div className={`status ${status.className}`}>
+              {flashParts.map((part, i) => (
+                <span
+                  key={`${i}-${flashKey}`}
+                  className={part.isDifferent ? 'flash' : ''}
+                >
+                  {part.text}
+                </span>
+              ))}
+            </div>
+          </div>
+        )
+      }
 
-            const [isRunning, setIsRunning] = useState(false)
-            const [stopRequested, setStopRequested] = useState(false)
+      function App() {
+        const [enabledDomains, setEnabledDomains] = useState(() => {
+          const saved = localStorage.getItem('domainCheckboxStates')
+          if (saved) {
+            return JSON.parse(saved)
+          }
+          return Object.fromEntries(DOMAINS.map((d) => [d, true]))
+        })
 
-            const [statuses, setStatuses] = useState(
-                Object.fromEntries(
-                    DOMAINS.map(d => [d, { message: 'Not tested', className: '' }])
-                )
-            )
+        const [pauseTime, setPauseTime] = useState(() => {
+          const saved = localStorage.getItem('pauseTime')
+          return saved ? parseInt(saved) : 100
+        })
 
-            useEffect(() => {
-                localStorage.setItem('domainCheckboxStates', JSON.stringify(enabledDomains))
-            }, [enabledDomains])
+        const [isRunning, setIsRunning] = useState(false)
+        const [stopRequested, setStopRequested] = useState(false)
+        const [loadingDomains, setLoadingDomains] = useState({})
 
-            useEffect(() => {
-                localStorage.setItem('pauseTime', pauseTime.toString())
-            }, [pauseTime])
+        const [statuses, setStatuses] = useState(
+          Object.fromEntries(
+            DOMAINS.map((d) => [d, { message: 'Not tested', className: '' }])
+          )
+        )
 
-            const toggleDomain = useCallback((domain) => {
-                setEnabledDomains(prev => ({
-                    ...prev,
-                    [domain]: !prev[domain]
-                }))
-            }, [])
+        useEffect(() => {
+          localStorage.setItem(
+            'domainCheckboxStates',
+            JSON.stringify(enabledDomains)
+          )
+        }, [enabledDomains])
 
-            const toggleAll = useCallback(() => {
-                const allEnabled = DOMAINS.every(d => enabledDomains[d])
-                setEnabledDomains(
-                    Object.fromEntries(DOMAINS.map(d => [d, !allEnabled]))
-                )
-            }, [enabledDomains])
+        useEffect(() => {
+          localStorage.setItem('pauseTime', pauseTime.toString())
+        }, [pauseTime])
 
-            const testDomain = useCallback(async (domain) => {
-                setStatuses(prev => ({
-                    ...prev,
-                    [domain]: { message: 'Testing...', className: '' }
-                }))
+        const toggleDomain = useCallback((domain) => {
+          setEnabledDomains((prev) => ({
+            ...prev,
+            [domain]: !prev[domain],
+          }))
+        }, [])
 
-                try {
-                    const startTime = Date.now()
-                    await fetch(domain, { method: 'HEAD', mode: 'no-cors' })
-                    const duration = Date.now() - startTime
+        const toggleAll = useCallback(() => {
+          const allEnabled = DOMAINS.every((d) => enabledDomains[d])
+          setEnabledDomains(
+            Object.fromEntries(DOMAINS.map((d) => [d, !allEnabled]))
+          )
+        }, [enabledDomains])
 
-                    setStatuses(prev => ({
-                        ...prev,
-                        [domain]: {
-                            message: `Reachable (${duration}ms)`,
-                            className: 'success'
-                        }
-                    }))
-                } catch (error) {
-                    setStatuses(prev => ({
-                        ...prev,
-                        [domain]: {
-                            message: `Error: ${error.message}`,
-                            className: 'error'
-                        }
-                    }))
-                }
-            }, [])
+        const testDomain = useCallback(async (domain) => {
+          setLoadingDomains((prev) => ({ ...prev, [domain]: true }))
 
-            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+          try {
+            const startTime = Date.now()
+            await fetch(domain, { method: 'HEAD', mode: 'no-cors' })
+            const duration = Date.now() - startTime
 
-            const getEnabledDomains = useCallback(() => {
-                return DOMAINS.filter(d => enabledDomains[d])
-            }, [enabledDomains])
+            setStatuses((prev) => ({
+              ...prev,
+              [domain]: {
+                message: `Reachable (${duration}ms)`,
+                className: 'success',
+              },
+            }))
+          } catch (error) {
+            setStatuses((prev) => ({
+              ...prev,
+              [domain]: {
+                message: `Error: ${error.message}`,
+                className: 'error',
+              },
+            }))
+          } finally {
+            setLoadingDomains((prev) => ({ ...prev, [domain]: false }))
+          }
+        }, [])
 
-            const runTests = useCallback(async () => {
-                let enabled = getEnabledDomains()
-                
-                if (enabled.length === 0) {
-                    alert('Please select at least one domain to test')
-                    return
-                }
+        const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
-                setIsRunning(true)
-                setStopRequested(false)
+        const getEnabledDomains = useCallback(() => {
+          return DOMAINS.filter((d) => enabledDomains[d])
+        }, [enabledDomains])
 
-                while (!stopRequested) {
-                    enabled = getEnabledDomains()
-                    
-                    if (enabled.length === 0) {
-                        alert('All domains unchecked, stopping test')
-                        break
-                    }
+        const runTests = useCallback(async () => {
+          let enabled = getEnabledDomains()
 
-                    const domain = enabled[Math.floor(Math.random() * enabled.length)]
-                    await testDomain(domain)
-                    await sleep(pauseTime)
-                    
-                    if (stopRequested) break
-                }
+          if (enabled.length === 0) {
+            alert('Please select at least one domain to test')
+            return
+          }
 
-                setIsRunning(false)
-            }, [enabledDomains, pauseTime, stopRequested, testDomain, getEnabledDomains])
+          setIsRunning(true)
+          setStopRequested(false)
 
-            useEffect(() => {
-                if (stopRequested && isRunning) {
-                    setIsRunning(false)
-                }
-            }, [stopRequested, isRunning])
+          while (!stopRequested) {
+            enabled = getEnabledDomains()
 
-            const handleToggleTest = () => {
-                if (isRunning) {
-                    setStopRequested(true)
-                } else {
-                    setStopRequested(false)
-                    runTests()
-                }
+            if (enabled.length === 0) {
+              alert('All domains unchecked, stopping test')
+              break
             }
 
-            return (
-                <div>
-                    <h2>Domain Connectivity Test</h2>
-                    <div className="controls">
-                        <button onClick={handleToggleTest}>
-                            {isRunning ? 'Stop Test' : 'Start Test'}
-                        </button>
-                        <button onClick={toggleAll}>Toggle All</button>
-                        <label>
-                            Pause time (ms):
-                            <input
-                                type="number"
-                                value={pauseTime}
-                                onChange={(e) => setPauseTime(parseInt(e.target.value) || 0)}
-                                min="0"
-                                step="10"
-                            />
-                        </label>
-                    </div>
-                    <div>
-                        {DOMAINS.map(domain => (
-                            <DomainTest
-                                key={domain}
-                                domain={domain}
-                                enabled={enabledDomains[domain]}
-                                onToggle={toggleDomain}
-                                status={statuses[domain]}
-                                onTest={testDomain}
-                            />
-                        ))}
-                    </div>
-                </div>
-            )
+            const domain = enabled[Math.floor(Math.random() * enabled.length)]
+            await testDomain(domain)
+            await sleep(pauseTime)
+
+            if (stopRequested) break
+          }
+
+          setIsRunning(false)
+        }, [
+          enabledDomains,
+          pauseTime,
+          stopRequested,
+          testDomain,
+          getEnabledDomains,
+        ])
+
+        useEffect(() => {
+          if (stopRequested && isRunning) {
+            setIsRunning(false)
+          }
+        }, [stopRequested, isRunning])
+
+        const handleToggleTest = () => {
+          if (isRunning) {
+            setStopRequested(true)
+          } else {
+            setStopRequested(false)
+            runTests()
+          }
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'))
-        root.render(<App />)
+        return (
+          <div>
+            <h2>Domain Connectivity Test</h2>
+            <div className="controls">
+              <button onClick={handleToggleTest}>
+                {isRunning ? 'Stop Test' : 'Start Test'}
+              </button>
+              <button onClick={toggleAll}>Toggle All</button>
+              <label>
+                Pause time (ms):
+                <input
+                  type="number"
+                  value={pauseTime}
+                  onChange={(e) => setPauseTime(parseInt(e.target.value) || 0)}
+                  min="0"
+                  step="10"
+                />
+              </label>
+            </div>
+            <div>
+              {DOMAINS.map((domain) => (
+                <DomainTest
+                  key={domain}
+                  domain={domain}
+                  enabled={enabledDomains[domain]}
+                  onToggle={toggleDomain}
+                  status={statuses[domain]}
+                  onTest={testDomain}
+                  isLoading={loadingDomains[domain]}
+                />
+              ))}
+            </div>
+          </div>
+        )
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById('root'))
+      root.render(<App />)
     </script>
-</body>
+  </body>
 </html>
