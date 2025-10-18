@@ -1,0 +1,26 @@
+{
+  "name": "ipvfoo-agoodkind",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "pnpm run build:all",
+    "build:all": "node build.mjs",
+    "build:firefox": "node build.mjs firefox",
+    "build:chrome": "node build.mjs chrome",
+    "build:safari": "node build.mjs safari",
+    "watch": "node build.mjs --watch",
+    "watch:firefox": "node build.mjs firefox --watch",
+    "watch:chrome": "node build.mjs chrome --watch",
+    "watch:safari": "node build.mjs safari --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.18.1",
+  "devDependencies": {
+    "@types/chrome": "^0.1.24",
+    "esbuild": "^0.25.11"
+  }
+}

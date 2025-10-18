@@ -1,4 +1,15 @@
-const doNativeLookup = async (domain) => {
+/**
+ * Looks up a domain using the native DNS resolver.
+ * @param {string} domain - The domain to look up.
+ * @returns {Promise<{
+ *   addresses: {
+ *     address: string;
+ *     version: string;
+ *   }[];
+ *   tcpAddress: string | null;
+ * }>} - The result from the native DNS resolver.
+ */
+export const doNativeLookup = async (domain) => {
   try {
     const result = await browser.runtime.sendNativeMessage("ipvfoo_helper", {
       cmd: "lookup",
@@ -8,7 +19,7 @@ const doNativeLookup = async (domain) => {
     if (result.error) {
       throw new Error(result.error);
     } else {
-      return result.addresses;
+      return result;
     }
   } catch (error) {
     debugLog("Native lookup error:", error);
@@ -77,7 +88,7 @@ setInterval(() => {
  * @param {string} domain - The domain to look up.
  * @returns {Promise<string>} - The resolved IP address.
  */
-const lookupDomainNative = async (domain) => {
+export const lookupDomainNative = async (domain) => {
   // Check cache first
   const cacheEntry = dnsCache.get(domain);
   if (cacheEntry && now - cacheEntry.timestamp < DNS_CACHE_TTL) {
@@ -85,30 +96,17 @@ const lookupDomainNative = async (domain) => {
     return cacheEntry.ip;
   }
 
-  const [addresses, hasV6Connectivity] = await Promise.all([
-    doNativeLookup(domain),
-    checkIPv6Connectivity(),
-  ]);
-  let address;
-  if (addresses.length > 0) {
-    const ipv4 = addresses.find((a) => a.version === "v4");
-    const ipv6 = addresses.find((a) => a.version === "v6");
-    if (hasV6Connectivity && ipv6) {
-      address = ipv6.address;
-    } else if (ipv4) {
-      address = ipv4.address;
-    } else {
-      address = null;
-    }
+  const addresses = await doNativeLookup(domain);
 
-    if (address) {
-      dnsCache.set(domain, {
-        ip: address,
-        timestamp: Date.now(),
-      });
-      debugLog("result cached for", domain);
-      return address;
-    }
+  let address = addresses.tcpAddress;
+
+  if (address) {
+    dnsCache.set(domain, {
+      ip: address,
+      timestamp: Date.now(),
+    });
+    debugLog("result cached for", "domain=" + domain, "address=" + address);
   }
-  return null;
+
+  return address;
 };

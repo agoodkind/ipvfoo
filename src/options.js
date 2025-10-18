@@ -16,7 +16,16 @@ limitations under the License.
 
 "use strict";
 
-// Requires <script src="common.js">
+import {
+  addEventListenersForFirefoxLinks,
+  formatIPv6,
+  IPV4_ONLY_DOMAINS,
+  NAT64_KEY,
+  options,
+  removeChildren,
+  revertNAT64,
+  watchOptions
+} from "./lib/common.js";
 
 window.onload = async () => {
   const ipv4pages = document.getElementById("ipv4pages");
@@ -58,19 +67,5 @@ window.onload = async () => {
     }
   };
 
-  // Workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=1946972
-  if (typeof browser != "undefined") {
-    document.body.addEventListener("click", function(e) {
-      if (e.target.tagName == "A" && (e.ctrlKey || e.metaKey || e.shiftKey)) {
-        window.open(e.target.href);
-        e.preventDefault();
-      }
-    });
-    document.body.addEventListener("auxclick", function(e) {
-      if (e.target.tagName == "A" && e.button == 1) {
-        window.open(e.target.href);
-        e.preventDefault();
-      }
-    });
-  }
+  addEventListenersForFirefoxLinks(document.body);
 }

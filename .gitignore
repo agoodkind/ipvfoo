@@ -78,5 +78,7 @@ fastlane/screenshots/**/*.png
 fastlane/test_output
 fastlane/*.env
 
-
+node_modules/
+dist/
+*.log
 .DS_Store

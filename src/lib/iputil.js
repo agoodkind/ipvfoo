@@ -6,7 +6,7 @@ const IPV6_PART_COUNT = 8;
 
 // Based on Guava ipStringToBytes.
 // Returns 32/4=8 hex digits for IPv4, 128/4=32 hex digits for IPv6.
-function parseIP(s) {
+export function parseIP(s) {
   // Make a first pass to categorize the characters in this string.
   let hasColon = false;
   let hasDot = false;
@@ -39,7 +39,7 @@ function parseIP(s) {
 }
 
 // The input is a /96 or /128 worth of hex digits.
-function formatIPv6(packed, with_dots = false) {
+export function formatIPv6(packed, with_dots = false) {
   if (!(packed.length == 96/4 || packed.length == 128/4)) {
     throw "bad length";
   }
@@ -62,12 +62,10 @@ function formatIPv6(packed, with_dots = false) {
   return text;
 }
 
-function formatIPv6WithDots(packed) {
-  return formatIPv6(packed, true);
-}
+export const formatIPv6WithDots = (packed) => formatIPv6(packed, true);
 
 // Based on Guava textToNumericFormatV4
-function textToPackedIPv4(s) {
+export function textToPackedIPv4(s) {
   const parts = s.split(DOT, 5);
   if (parts.length != 4) {
     throw "wrong number of octets";
@@ -84,7 +82,7 @@ function textToPackedIPv4(s) {
 }
 
 // Based on Guava textToNumericFormatV6
-function textToPackedIPv6(s) {
+export function textToPackedIPv6(s) {
   // An address can have [2..8] colons.
   let delimiterCount = 0;
   for (const c of s) {
@@ -155,7 +153,7 @@ function textToPackedIPv6(s) {
 }
 
 // Based on Guava compressLongestRunOfZeroes
-function compressLongestRunOfZeroes(hextets) {
+export function compressLongestRunOfZeroes(hextets) {
   let bestRunStart = -1;
   let bestRunLength = -1;
   let runStart = -1;
@@ -181,7 +179,7 @@ function compressLongestRunOfZeroes(hextets) {
 }
 
 // Based on Guava hextetsToIPv6String
-function hextetsToIPv6String(hextets) {
+export function hextetsToIPv6String(hextets) {
   // While scanning the array, handle these state transitions:
   //   start->num => "num"     start->gap => "::"
   //   num->num   => ":num"    num->gap   => "::"

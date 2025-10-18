@@ -1,3 +1,33 @@
+import {
+  addPackedNAT64,
+  buildIcon,
+  clearMap,
+  DNS_CHARS,
+  FLAG_CONNECTED,
+  FLAG_NOSSL,
+  FLAG_NOTWORKER,
+  FLAG_SSL,
+  FLAG_UNCACHED,
+  FLAG_WEBSOCKET,
+  formatIPv6,
+  INCOGNITO_COLOR,
+  IP4_CHARS,
+  IP6_CHARS,
+  IPV4_ONLY_DOMAINS,
+  NAT64_KEY,
+  newMap,
+  options,
+  optionsReady,
+  REGULAR_COLOR,
+  setColorIsDarkMode,
+  spriteImg,
+  spriteImgReady,
+  watchOptions
+} from "./lib/common.js";
+
+import {lookupDomainNative} from "./lib/safari.js";
+import {debugLog} from "./lib/logger.js";
+
 /*
 Copyright (C) 2011  Paul Marks  http://www.pmarks.net/
 
@@ -37,25 +67,16 @@ user can demand a popup before any IP addresses are available.
 
 "use strict";
 
-const DEBUG = true;
-
-function debugLog() {
-  if (DEBUG) {
-    const timestamp = new Date().toISOString();
-    console.log(timestamp, ...arguments);
-    popups.relayLog({  message: arguments, timestamp: timestamp });
-  }
-}
 const isSafari = (typeof webkitURL !== 'undefined');
 // Once Chrome adds support for browser.* this needs to be updated
 // https://issues.chromium.org/issues/40556351
 const isFirefox = (typeof browser !== 'undefined' && !isSafari);
 
-if (chrome.runtime.getManifest().background.service_worker) {
-  // This only runs on Chrome.
-  // Firefox uses manifest.json/background/scripts instead.
-  importScripts("iputil.js", "common.js");
-}
+// if (chrome.runtime.getManifest().background.service_worker) {
+//   // This only runs on Chrome.
+//   // Firefox uses manifest.json/background/scripts instead.
+//   importScripts("iputil.js", "common.js");
+// }
 
 // Possible states for an instance of TabInfo.
 // We begin at BIRTH, and only ever move forward, not backward.
@@ -65,12 +86,6 @@ const TAB_DEAD = 2;
 
 // RequestFilter for webRequest events.
 const FILTER_ALL_URLS = { urls: ["<all_urls>"] };
-
-// Distinguish IP address and domain name characters.
-// Note that IP6_CHARS must not match "beef.de"
-const IP4_CHARS = /^[0-9.]+$/;
-const IP6_CHARS = /^[0-9A-Fa-f]*:[0-9A-Fa-f:.]*$/;
-const DNS_CHARS = /^[0-9A-Za-z._-]+$/;
 
 const SECONDS = 1000;  // to milliseconds
 
@@ -134,20 +149,6 @@ function updateNAT64(domain, addr) {
   }
   // If this is a new prefix, the watchOptions callback will handle it.
   addPackedNAT64(packed.slice(0, 96/4));
-}
-
-function reformatForNAT64(addr, doLookup=true) {
-  let packed128 = "";
-  try {
-    packed128 = parseIP(addr);
-  } catch {
-    return addr;  // no change
-  }
-  if (packed128.length != 128/4) {
-    return addr;  // no change
-  }
-  const isNAT64 = doLookup && options[NAT64_KEY].has(packed128.slice(0, 96/4));
-  return formatIPv6(packed128, /*with_dots=*/isNAT64);
 }
 
 // Magic object that calls action and/or pageAction. We want an icon in the
@@ -618,7 +619,7 @@ const requestMap = new SaveableMap(RequestInfo, "req/");
 // likely due to Apple's stance on privacy
 // https://github.com/pmarks-net/ipvfoo/issues/39
 const IP_CACHE_LIMIT = 1024;
-const ipCache = (isFirefox || isSafari) ?
+const ipCache = isFirefox ?
   new SaveableMap(IPCacheEntry, "ip/") : null;
 let ipCacheSize = 0;
 
@@ -1071,7 +1072,10 @@ chrome.webRequest.onResponseStarted.addListener(wrap(async (details) => {
   let addr = details.ip;
   let fromCache = details.fromCache;
 
-  // If no IP address is available and we have a domain, try DNS over HTTPS lookup
+  // If no IP address is available and we have a domain
+  // try asking the Swift app for the IP address
+  // This will use system resolvers, maintaing privacy 
+  // and respecting local DNS settings.
   if (!addr && isSafari) {
     addr = await lookupDomainNative(parsed.domain);
   }

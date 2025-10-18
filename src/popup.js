@@ -1,22 +1,18 @@
-/*
-Copyright (C) 2011  Paul Marks  http://www.pmarks.net/
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
-"use strict";
-
-// Requires <script src="common.js">
+import {
+  addEventListenersForFirefoxLinks,
+  buildIcon,
+  FLAG_CONNECTED,
+  FLAG_NOSSL,
+  FLAG_NOTWORKER,
+  FLAG_SSL,
+  FLAG_UNCACHED,
+  FLAG_WEBSOCKET,
+  IS_MOBILE,
+  optionsReady,
+  removeChildren,
+  setColorIsDarkMode,
+  spriteImgReady
+} from "./lib/common.js";
 
 const ALL_URLS = "<all_urls>";
 const DEBUG = true;
@@ -24,16 +20,19 @@ const DEBUG = true;
 // Snip domains longer than this, to avoid horizontal scrolling.
 const LONG_DOMAIN = 50;
 
-const tabId = window.location.hash.substr(1);
-if (!isFinite(Number(tabId))) {
-  throw "Bad tabId";
+const tabId = window.location.hash.substring(1);
+if (!Number.isFinite(Number(tabId))) {
+  throw new Error("Bad tabId");
 }
 
 let table = null;
+let lastPattern = "";
+let lastColor = "";  // regular/incognito color scheme
 
 window.onload = async function() {
   table = document.getElementById("addr_table");
   table.onmousedown = handleMouseDown;
+  addEventListenersForFirefoxLinks(document.body);
   await beg();
   if (IS_MOBILE) {
     document.getElementById("mobile_footer").style.display = "flex";
@@ -151,8 +150,6 @@ function pushOne(tuple) {
   }
 }
 
-let lastPattern = "";
-let lastColor = "";  // regular/incognito color scheme
 async function pushPattern(pattern, color) {
   if (lastColor != color) {
     lastColor = color;
@@ -248,16 +245,16 @@ function makeSslImg(flags) {
   switch (flags & (FLAG_SSL | FLAG_NOSSL)) {
     case FLAG_SSL | FLAG_NOSSL:
       return makeImg(
-          "gray_schrodingers_lock.png",
+          "assets/gray_schrodingers_lock.png",
           "Mixture of HTTPS and non-HTTPS connections.");
     case FLAG_SSL:
       return makeImg(
-          "gray_lock.png",
+          "assets/gray_lock.png",
           "Connection uses HTTPS.\n" +
           "Warning: IPvFoo does not verify the integrity of encryption.");
     default:
       return makeImg(
-          "gray_unlock.png",
+          "assets/gray_unlock.png",
           "Connection does not use HTTPS.");
   }
 }
@@ -312,15 +309,15 @@ function makeRow(isFirst, tuple) {
   cacheTd.className = `cacheTd${connectedClass}`;
   if (flags & FLAG_WEBSOCKET) {
     cacheTd.appendChild(
-        makeImg("websocket.png", "WebSocket handshake; connection may still be active."));
+        makeImg("assets/websocket.png", "WebSocket handshake; connection may still be active."));
     cacheTd.style.paddingLeft = '6pt';
   } else if (!(flags & FLAG_NOTWORKER)) {
     cacheTd.appendChild(
-        makeImg("serviceworker.png", "Service Worker request; possibly from a different tab."));
+        makeImg("assets/serviceworker.png", "Service Worker request; possibly from a different tab."));
     cacheTd.style.paddingLeft = '6pt';
   } else if (!(flags & FLAG_UNCACHED)) {
     cacheTd.appendChild(
-        makeImg("cached_arrow.png", "Data from cached requests only."));
+        makeImg("assets/cached_arrow.png", "Data from cached requests only."));
     cacheTd.style.paddingLeft = '6pt';
   } else {
     cacheTd.style.paddingLeft = '0';
@@ -352,7 +349,7 @@ function makeSnippedText(domain, keep) {
   f.appendChild(snippedText);
 
   // Add clickable "..." image.
-  const snipImg = makeImg("snip.png", "");
+  const snipImg = makeImg("assets/snip.png", "");
   snipImg.className = "snipImg";
   const snipLink = document.createElement("a");
   snipLink.className = "snipLinkInvisible snipLinkVisible";
