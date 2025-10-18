@@ -112,6 +112,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				DNSResolver.swift,
+
 				Resources/assets/1x1_808080.png,
 				Resources/assets/cached_arrow.png,
 				Resources/assets/detectdarkmode.html,
@@ -119,9 +120,9 @@
 				Resources/assets/gray_lock.png,
 				Resources/assets/gray_schrodingers_lock.png,
 				Resources/assets/gray_unlock.png,
-				Resources/assets/icon16_transparent.png,
-				Resources/assets/icon16.png,
 				Resources/assets/icon128.png,
+				Resources/assets/icon16.png,
+				Resources/assets/icon16_transparent.png,
 				Resources/assets/serviceworker.png,
 				Resources/assets/snip.png,
 				Resources/assets/sprites16.png,
@@ -140,6 +141,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				DNSResolver.swift,
+
 				Resources/assets/1x1_808080.png,
 				Resources/assets/cached_arrow.png,
 				Resources/assets/detectdarkmode.html,
@@ -147,9 +149,9 @@
 				Resources/assets/gray_lock.png,
 				Resources/assets/gray_schrodingers_lock.png,
 				Resources/assets/gray_unlock.png,
-				Resources/assets/icon16_transparent.png,
-				Resources/assets/icon16.png,
 				Resources/assets/icon128.png,
+				Resources/assets/icon16.png,
+				Resources/assets/icon16_transparent.png,
 				Resources/assets/serviceworker.png,
 				Resources/assets/snip.png,
 				Resources/assets/sprites16.png,
