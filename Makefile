@@ -151,6 +151,7 @@ safari-clean:
 	rm -rf safari/Shared\ \(Extension\)/Resources/*.map
 	rm -rf safari/Shared\ \(Extension\)/Resources/*.html
 	rm -rf safari/Shared\ \(Extension\)/Resources/manifest.json
+	rm -rf safari/Shared\ \(Extension\)/Resources/assets/
 
 clean: safari-clean
 	rm -rf ${BUILDDIR}
