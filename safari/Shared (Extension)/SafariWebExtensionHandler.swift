@@ -1,8 +1,7 @@
-import SafariServices
 import os.log
+import SafariServices
 
 class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
-
     // Main entry point for extension requests
     func beginRequest(with context: NSExtensionContext) {
         os_log(.debug, "[Request] beginRequest start")
@@ -31,34 +30,33 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             let responseMessage: [String: Any]
 
             if let messageDict = message as? [String: Any],
-                messageDict["cmd"] as? String == "lookup",
-                let domain = messageDict["domain"] as? String
+               messageDict["cmd"] as? String == "lookup",
+               let domain = messageDict["domain"] as? String
             {
-                let summary = await DNSResolver.lookupDomain(domain) { message in
+                let tcpAddress = await DNSResolver.verifyTcpConnection(domain: domain, port: 443) { message in
                     os_log(.debug, "%{public}@", message)
                 }
-                if summary.addresses.isEmpty {
+
+                // Safely handle optional result from verifyTcpConnection
+                guard let tcpAddress = tcpAddress, !tcpAddress.isEmpty else {
                     os_log(
                         .error,
                         "[Request] lookupDomain failed domain=%{public}@",
                         domain
                     )
                     responseMessage = ["error": "DNS lookup failed"]
-                } else {
-                    os_log(
-                        .debug,
-                        "[Request] lookupDomain success domain=%{public}@ count=%{public}ld",
-                        domain,
-                        summary.addresses.count
-                    )
-                    responseMessage = [
-                        "addresses": summary.addresses.map { [
-                            "address": $0.address,
-                            "version": $0.version,
-                        ] },
-                        "tcpAddress": summary.tcpVerifiedAddress ?? NSNull(),
-                    ]
+                    return
                 }
+
+                os_log(
+                    .debug,
+                    "[Request] lookupDomain success domain=%{public}@ tcp=%{public}@",
+                    domain,
+                    tcpAddress
+                )
+                responseMessage = [
+                    "tcpAddress": tcpAddress
+                ]
             } else {
                 os_log(.debug, "[Request] Echoing message")
                 responseMessage = ["echo": message ?? ""]
