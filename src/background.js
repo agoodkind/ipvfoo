@@ -94,10 +94,6 @@ if (isSafari) {
       VERBOSE3: console.log("relay", ...msg);
     }
   });
-
-  setTimeout(() => {
-    // chrome..sendMessage({cmd: "backgroundLoaded"});
-  }, 1000);
 }
 
 /**
@@ -122,7 +118,7 @@ async function getTrueTabDomain(tabId) {
  * @param {Object} details - The details object from the webRequest event
  * @returns {Promise<boolean>} - True if the true tab domain matches the source of truth, false otherwise
  */
-const isMainTabUrl = async (details) => {
+async function isMainTabUrl(details) {
   if (details.type != "main_frame" && details.type != "outermost_frame") {
     return false;
   }
@@ -334,6 +330,9 @@ class TabInfo extends SaveableEntry {
   mainDomain = "";       // Bare domain from the main_frame request.
   mainOrigin = "";       // Origin from the main_frame request.
   committed = false;     // True if onCommitted has fired.
+  /**
+   * @type {Map<string, DomainInfo>}
+   */
   domains = newMap();    // Updated whenever we get some IPs.
   spillCount = 0;        // How many requests didn't fit in domains.
   lastPattern = "";      // To avoid redundant icon redraws.
@@ -426,8 +425,13 @@ class TabInfo extends SaveableEntry {
     this.save();
   }
 
+  /**
+   * @param {string} domain
+   * @param {string} addr
+   * @param {number} flags
+   */
   addDomain(domain, addr, flags) {
-    VERBOSE2: console.log("addDomain before", domain, addr, flags, this.domains);
+    VERBOSE2: console.log("addDomain", domain, addr, flags, this.domains);
     let d = this.domains[domain];
     if (!d) {
       // Limit the number of domains per page, to avoid wasting RAM.
@@ -623,7 +627,11 @@ class RequestInfo extends SaveableEntry {
   // Typically this contains one {tabId: tabBorn} entry,
   // but for Service Worker requests there may be multiple tabs.
   tabIdToBorn = newMap();
+   
   domain = null;
+  
+  // Set to true when onCompleted/onErrorOccurred fires, so we can countDown later
+  completed = false;
 
   afterLoad() {
     for (const [tabId, tabBorn] of Object.entries(this.tabIdToBorn)) {
@@ -654,6 +662,9 @@ class IPCacheEntry extends SaveableEntry {
 const tabMap = new SaveableMap(TabInfo, "tab/")
 
 // requestId -> RequestInfo
+/**
+ * @type {SaveableMap | RequestInfo}
+ */
 const requestMap = new SaveableMap(RequestInfo, "req/");
 
 // For Firefox domain->ip cache
@@ -709,23 +720,25 @@ function lookupOriginMap(origin) {
   return originMap[origin] || new Set();
 }
 
+async function detectDarkMode() {
+  VERBOSE2: console.log("detectdarkmode");
+  await optionsReady;
+  VERBOSE2: console.log("optionsReady");
+  const query = window.matchMedia("(prefers-color-scheme: dark)");
+  VERBOSE2: console.log("query", query);
+  setColorIsDarkMode(REGULAR_COLOR, query.matches);
+  VERBOSE2: console.log("setColorIsDarkMode", query.matches);
+  query.addEventListener("change", (event) => {
+    VERBOSE2: console.log("change", event);
+    setColorIsDarkMode(REGULAR_COLOR, event.matches);
+  });
+}
+
 // Dark mode detection. This can eventually be replaced by
 // https://github.com/w3c/webextensions/issues/229
 if (typeof window !== 'undefined' && window.matchMedia) {
   // Firefox can detect dark mode from the background page.
-  (async () => {
-    VERBOSE2: console.log("detectdarkmode");
-    await optionsReady;
-    VERBOSE2: console.log("optionsReady");
-    const query = window.matchMedia('(prefers-color-scheme: dark)');
-    VERBOSE2: console.log("query", query);
-    setColorIsDarkMode(REGULAR_COLOR, query.matches);
-    VERBOSE2: console.log("setColorIsDarkMode", query.matches);
-    query.addEventListener("change", (event) => {
-      VERBOSE2: console.log("change", event);
-      setColorIsDarkMode(REGULAR_COLOR, event.matches);
-    });
-  })();
+  detectDarkMode();
 } else {
   // Chrome needs an offscreen document to detect dark mode.
   chrome.runtime.onMessage.addListener((message) => {
@@ -883,18 +896,22 @@ class Popups {
       return
     }
     VERBOSE4: console.log(
-      'pushOne',
-      'tabId',
+      "pushOne",
+      "tabId",
       tabId,
-      'domain',
+      "domain",
       tuple[0],
-      'addr',
+      "addr",
       tuple[1],
-      'version',
+      "version",
       tuple[2],
-      'flags',
-      tuple[3]
-    )
+      "flags",
+      tuple[3],
+      "caller: ",
+      new Error().stack
+        .split("\n")
+        .map((line) => line.trim()),
+    );
     this.sendMessage(tabId, {
       cmd: 'pushOne',
       tuple: tuple,
@@ -945,21 +962,21 @@ class Popups {
 
 const popups = new Popups();
 
-chrome.runtime.onConnect.addListener(wrap(async (port) => {
+chrome.runtime.onConnect.addListener(async (port) => {
   await storageReady;
   popups.attachPort(port);
   port.onDisconnect.addListener(() => {
     popups.detachPort(port);
   });
-}));
+});
 
 // Refresh icons after chrome.runtime.reload()
-chrome.runtime.onInstalled.addListener(wrap(async () => {
+chrome.runtime.onInstalled.addListener(async () => {
   await storageReady;
   for (const tabInfo of Object.values(tabMap)) {
     tabInfo.refreshPageAction();
   }
-}));
+});
 
 // -- TabTracker --
 
@@ -979,19 +996,19 @@ class TabTracker {
   tabSet = newMap();  // Set of all known tabIds
 
   constructor() {
-    chrome.tabs.onCreated.addListener(wrap(async (tab) => {
+    chrome.tabs.onCreated.addListener(async (tab) => {
       await storageReady;
       this.#addTab(tab.id, "onCreated");
-    }));
-    chrome.tabs.onRemoved.addListener(wrap(async (tabId) => {
+    });
+    chrome.tabs.onRemoved.addListener(async (tabId) => {
       await storageReady;
       this.#removeTab(tabId, "onRemoved");
-    }));
-    chrome.tabs.onReplaced.addListener(wrap(async (addId, removeId) => {
+    });
+    chrome.tabs.onReplaced.addListener(async (addId, removeId) => {
       await storageReady;
       this.#removeTab(removeId, "onReplaced");
       this.#addTab(addId, "onReplaced");
-    }));
+    });
     this.#pollAllTabs();
   }
 
@@ -1047,7 +1064,7 @@ const tabTracker = new TabTracker();
 //
 // Conveniently, this also ensures that the previous page data is cleared
 // when navigating to a file://, chrome://, or Chrome Web Store URL.
-chrome.webNavigation.onBeforeNavigate.addListener(wrap(async (details) => {
+chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   if (!(details.frameId == 0 && details.tabId > 0)) {
     return;
   }
@@ -1062,9 +1079,9 @@ chrome.webNavigation.onBeforeNavigate.addListener(wrap(async (details) => {
   tabMap.remove(details.tabId);
   tabInfo = tabMap.lookupOrNew(details.tabId);
   tabInfo.setInitialDomain(-1, parsed.domain, parsed.origin);
-}));
+});
 
-chrome.webNavigation.onCommitted.addListener(wrap(async (details) => {
+chrome.webNavigation.onCommitted.addListener(async (details) => {
   VERBOSE3: console.log("wN.oC", details?.tabId, details?.url, details);
   await storageReady;
   if (details.frameId != 0) {
@@ -1073,14 +1090,14 @@ chrome.webNavigation.onCommitted.addListener(wrap(async (details) => {
   const parsed = parseUrl(details.url);
   const tabInfo = tabMap.lookupOrNew(details.tabId);
   tabInfo.setCommitted(parsed.domain, parsed.origin);
-}));
+});
 
 // -- tabs --
 
 // Whenever anything tab-related happens, try to refresh the pageAction.  This
 // is hacky and inefficient, but the back-stabbing browser leaves me no choice.
 // This seems to fix http://crbug.com/124970 and some problems on Google+.
-chrome.tabs.onUpdated.addListener(wrap(async (tabId, changeInfo, tab) => {
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   VERBOSE4: console.log("tabs.oU", tabId);
   await storageReady;
   const tabInfo = tabMap[tabId];
@@ -1088,11 +1105,12 @@ chrome.tabs.onUpdated.addListener(wrap(async (tabId, changeInfo, tab) => {
     tabInfo.color = tab.incognito ? INCOGNITO_COLOR : REGULAR_COLOR;
     tabInfo.refreshPageAction();
   }
-}));
+});
 
 // -- webRequest --
 
-chrome.webRequest.onBeforeRequest.addListener(wrap(async (details) => {
+// @ts-ignore
+chrome.webRequest.onBeforeRequest.addListener(async (details) => {
   VERBOSE3: console.log("wR.oBR", details?.tabId, details?.url, details);
   await storageReady;
   const tabId = details.tabId;
@@ -1110,8 +1128,10 @@ chrome.webRequest.onBeforeRequest.addListener(wrap(async (details) => {
         tabInfos.push(tabInfo);
       }
     }
+  // @ts-ignore
   } else if (tabId == -1 && (details.initiator || details.documentUrl)) {
     // Chrome uses initiator, Firefox uses documentUrl.
+    // @ts-ignore
     const initiator = details.initiator || parseUrl(details.documentUrl).origin;
     // Request is from a tabless Service Worker.
     // Find all tabs matching the initiator's origin.
@@ -1134,15 +1154,15 @@ chrome.webRequest.onBeforeRequest.addListener(wrap(async (details) => {
     requestInfo.tabIdToBorn[tabInfo.id()] = tabInfo.born;
   }
   requestInfo.domain = null;
-  requestInfo.save();
-}), FILTER_ALL_URLS);
+  // Don't save here - will be saved in onResponseStarted when domain is set
+}, FILTER_ALL_URLS);
 
 // In the event of a redirect, the mainOrigin may change
 // (from http: to https:) between the onBeforeRequest and onCommitted events,
 // triggering an "access denied" error.  Patch this from onBeforeRedirect.
 //
 // As of 2022, this can be tested by visiting http://maps.google.com/
-chrome.webRequest.onBeforeRedirect.addListener(wrap(async (details) => {
+chrome.webRequest.onBeforeRedirect.addListener(async (details) => {
   await storageReady;
   if (!(await isMainTabUrl(details))) {
     return;
@@ -1164,20 +1184,36 @@ chrome.webRequest.onBeforeRedirect.addListener(wrap(async (details) => {
     tabInfo.setInitialDomain(requestInfo.id(), parsed.domain, parsed.origin);
   }
 
-}), FILTER_ALL_URLS);
+}, FILTER_ALL_URLS);
 
-chrome.webRequest.onResponseStarted.addListener(wrap(async (details) => {
-  VERBOSE2: !isSafari && console.log(
+chrome.webRequest.onResponseStarted.addListener(
+  /**
+   * @param {chrome.webRequest.OnResponseStartedDetails} details 
+   * @returns {Promise<void>}
+   */
+  async (details) => {
+
+  await storageReady;
+  /**
+   * @type {RequestInfo}
+   */
+  const requestInfo = requestMap[details.requestId];
+
+  VERBOSE3: !isSafari && console.log(
     "wR.oRS", details?.tabId,
     details?.requestId,
     new URL(details?.url).hostname,
-    details?.ip, "type", details.type);
-  await storageReady;
-  const requestInfo = requestMap[details.requestId];
-  VERBOSE2: console.log("wR.oRS.requestInfo", requestInfo);
+    details?.ip, "type", details.type
+  );
+
   if (!requestInfo) {
+    VERBOSE3: console.log("wR.oRS: requestInfo not found for", details.requestId);
     return;
   }
+   
+  /**
+   * @type {TabInfo[]}
+   */
   const tabInfos = [];
   for (const [tabId, tabBorn] of Object.entries(requestInfo.tabIdToBorn)) {
     const tabInfo = tabMap[tabId];
@@ -1186,11 +1222,13 @@ chrome.webRequest.onResponseStarted.addListener(wrap(async (details) => {
     }
     tabInfos.push(tabInfo);
   }
+
   if (!tabInfos.length) {
     return;
   }
   const parsed = parseUrl(details.url);
   if (!parsed.domain) {
+    VERBOSE3: console.error("wR.oRS: no domain", details.url);
     return;
   }
 
@@ -1206,8 +1244,14 @@ chrome.webRequest.onResponseStarted.addListener(wrap(async (details) => {
   // https://github.com/pmarks-net/ipvfoo/issues/39
   if (!addr && isSafari) {
     addr = await lookupDomainNative(parsed.domain);
-    VERBOSE2: console.log(
+    VERBOSE3: console.log(
       "wR.oRS", details?.tabId, details?.requestId, parsed.domain, addr, "type", details.type);
+    
+    // Check if request was removed from map during the async DNS lookup
+    if (requestMap[details.requestId] !== requestInfo) {
+      VERBOSE3: console.log("wR.oRS: request was removed during DNS lookup", details.requestId);
+      return;
+    }
   }
 
   if (!fromCache) {
@@ -1253,21 +1297,44 @@ chrome.webRequest.onResponseStarted.addListener(wrap(async (details) => {
   for (const tabInfo of tabInfos) {
     tabInfo.addDomain(parsed.domain, addr, flags);
   }
-}), FILTER_ALL_URLS);
+  
+  // If request was already marked as completed (onCompleted fired during DNS lookup),
+  // we need to clean it up now, this happens in Safari due to the async DNS lookup
+  if (requestInfo.completed) {
+    for (const [tabId, tabBorn] of Object.entries(requestInfo.tabIdToBorn)) {
+      const tabInfo = tabMap[tabId];
+      if (tabInfo?.born == tabBorn) {
+        tabInfo.domains[requestInfo.domain]?.countDown();
+      }
+    }
+    requestMap.remove(details.requestId);
+  }
 
-const forgetRequest = wrap(async (details) => {
+}, FILTER_ALL_URLS);
+
+async function forgetRequest(details) {
   await storageReady;
-  const requestInfo = requestMap.remove(details.requestId);
-  if (!requestInfo?.domain) {
+  const requestInfo = requestMap[details.requestId];
+  if (!requestInfo) {
     return;
   }
+  
+  if (!requestInfo.domain) {
+    // Request hasn't set domain yet (onResponseStarted may still be running)
+    // Mark it as completed so onResponseStarted can clean up
+    requestInfo.completed = true;
+    return;
+  }
+  
+  // Now safe to remove since we have the domain
+  requestMap.remove(details.requestId);
   for (const [tabId, tabBorn] of Object.entries(requestInfo.tabIdToBorn)) {
     const tabInfo = tabMap[tabId];
     if (tabInfo?.born == tabBorn) {
       tabInfo.domains[requestInfo.domain]?.countDown();
     }
   }
-});
+};
 chrome.webRequest.onCompleted.addListener(forgetRequest, FILTER_ALL_URLS);
 chrome.webRequest.onErrorOccurred.addListener(forgetRequest, FILTER_ALL_URLS);
 

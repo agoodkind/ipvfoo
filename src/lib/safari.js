@@ -13,10 +13,26 @@ import { parseIP } from './iputil'
  */
 export const doNativeLookup = async (domain) => {
   try {
+    /**
+     * @type {{
+     *   error: string | null;
+     *   addresses: {
+     *     address: string;
+     *     version: string;
+     *   }[];
+     *   tcpAddress: string | null;
+     * }}
+     */
     const result = await browser.runtime.sendNativeMessage('ipvfoo_helper', {
       cmd: 'lookup',
       domain,
     })
+
+    VERBOSE5: console.log(
+      'Native lookup result:',
+      'domain=' + domain,
+      'tcpAddress=' + result.tcpAddress
+    )
 
     if (result.error) {
       throw new Error(result.error)
@@ -24,21 +40,56 @@ export const doNativeLookup = async (domain) => {
       return result
     }
   } catch (error) {
-    VERBOSE1: console.error(
+    VERBOSE2: console.warn(
       'Native lookup error:',
       'error',
       error,
       'domain',
       domain
     )
+    // This seems to be an issue with how the Native App resolves
+    // Apparently it blocks localhost lookups
     try {
-      parseIP(domain)
-      VERBOSE2: console.log(
-        'Got error when looking up domain that is an IP address: ',
-        domain
-      )
+      // check if the domain is an IP address
+      // for ipv6 that means it has [] brackets
+      // parseIP does not handle IPs given with []
+      let cleanDomain = domain
+      if (
+        typeof domain === 'string' &&
+        domain.startsWith('[') &&
+        domain.endsWith(']')
+      ) {
+        cleanDomain = domain.slice(1, -1)
+      }
+      // Check if it's a valid IPv4 or IPv6 address using parseIP
+      try {
+        const packed = parseIP(cleanDomain)
+        // parseIP returns 8 hex digits for IPv4, 32 hex digits for IPv6
+        const isIPv6 = packed.length === 32
+        VERBOSE3: console.log(
+          'Got error when looking up domain that is an IP address: ',
+          domain,
+          'returning as best effort'
+        )
+        return {
+          addresses: [
+            {
+              address: domain,
+              version: isIPv6 ? 'IPv6' : 'IPv4',
+            },
+          ],
+          tcpAddress: domain,
+        }
+      } catch (e) {
+        // Not a valid IP address
+        VERBOSE3: console.log(
+          'Got error when looking up domain that is an invalid IP address and could not be parsed: ',
+          domain
+        )
+        return null
+      }
     } catch {
-      VERBOSE2: console.log(
+      VERBOSE3: console.log(
         'Got error when looking up domain that is not an IP address: ',
         domain
       )

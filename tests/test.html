@@ -70,14 +70,14 @@
       }
       @keyframes flash-yellow {
         0% {
-          background-color: rgba(255, 255, 0, 0.4);
+          background-color: rgba(255, 255, 0, 0.5);
         }
         100% {
           background-color: transparent;
         }
       }
       .flash {
-        animation: flash-yellow 0.6s ease-out;
+        animation: flash-yellow 1s ease-out;
       }
       .controls {
         margin-bottom: 20px;
@@ -111,7 +111,6 @@
       const { useState, useEffect, useCallback, useRef } = React
 
       const DOMAINS = [
-        'https://ipv4.google.com',
         'https://ipv6.google.com',
         'https://ipv4.bing.com',
         'https://ipv4.google.com',
@@ -233,6 +232,7 @@
 
             const [isRunning, setIsRunning] = useState(false)
             const stopRequestedRef = useRef(false)
+            const enabledDomainsRef = useRef(enabledDomains)
 
         const [statuses, setStatuses] = useState(
           Object.fromEntries(
@@ -241,6 +241,7 @@
         )
 
         useEffect(() => {
+          enabledDomainsRef.current = enabledDomains
           localStorage.setItem(
             'domainCheckboxStates',
             JSON.stringify(enabledDomains)
@@ -291,9 +292,9 @@
 
         const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
-        const getEnabledDomains = useCallback(() => {
-          return DOMAINS.filter((d) => enabledDomains[d])
-        }, [enabledDomains])
+        const getEnabledDomains = () => {
+          return DOMAINS.filter((d) => enabledDomainsRef.current[d])
+        }
 
         const runTests = useCallback(async () => {
           let enabled = getEnabledDomains()
@@ -322,12 +323,7 @@
           }
 
           setIsRunning(false)
-        }, [
-          enabledDomains,
-          pauseTime,
-          testDomain,
-          getEnabledDomains,
-        ])
+        }, [pauseTime, testDomain])
 
         const handleToggleTest = () => {
           if (isRunning) {

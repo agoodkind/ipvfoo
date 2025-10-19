@@ -55,7 +55,6 @@
 
 /* Begin PBXFileReference section */
 		A43882D42EA43A1A00F64985 /* build_js.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = build_js.sh; sourceTree = "<group>"; };
-		A43882D52EA43A1A00F64985 /* open-safari-debugger.applescript */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.applescript; path = "open-safari-debugger.applescript"; sourceTree = "<group>"; };
 		A43882D62EA43A1A00F64985 /* safari.xcfilelist */ = {isa = PBXFileReference; lastKnownFileType = text.xcfilelist; path = safari.xcfilelist; sourceTree = "<group>"; };
 		B2C2F7D12EA2ACB90051EEFB /* ipvfoo-safari.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ipvfoo-safari.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B2C2F7E32EA2ACB90051EEFB /* ipvfoo-safari.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ipvfoo-safari.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -255,7 +254,6 @@
 			isa = PBXGroup;
 			children = (
 				A43882D42EA43A1A00F64985 /* build_js.sh */,
-				A43882D52EA43A1A00F64985 /* open-safari-debugger.applescript */,
 				A43882D62EA43A1A00F64985 /* safari.xcfilelist */,
 				B2C2F7B92EA2ACB70051EEFB /* Shared (App) */,
 				B2C2F7C22EA2ACB90051EEFB /* Shared (Extension) */,
