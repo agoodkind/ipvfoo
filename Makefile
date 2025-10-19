@@ -1,4 +1,5 @@
 BUILDDIR := build/
+DISTDIR := dist/
 NAME := ipvfoo
 
 MANIFEST_F := manifest/firefox-manifest.json
@@ -63,11 +64,11 @@ prepare:
 
 firefox: prepare build-firefox-pnpm
 	rm -f ${BUILDDIR}${NAME}-${VERSION_F}.xpi
-	zip -9j ${BUILDDIR}${NAME}-${VERSION_F}.xpi -j src/*
+	zip -9j ${BUILDDIR}${NAME}-${VERSION_F}.xpi -j ${DISTDIR}/firefox/*
 
 chrome: prepare build-chrome-pnpm
 	rm -f ${BUILDDIR}${NAME}-${VERSION_C}.zip
-	zip -9j ${BUILDDIR}${NAME}-${VERSION_C}.zip -j src/*
+	zip -9j ${BUILDDIR}${NAME}-${VERSION_C}.zip -j ${DISTDIR}/chrome/*
 
 safari: safari-build-resources
 	@echo "Building Safari extension..."
