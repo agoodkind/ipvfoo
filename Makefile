@@ -10,47 +10,47 @@ VERSION_C := $(shell sed -n 's/^ *"version": *"\([0-9.]*\)".*/\1/p' ${MANIFEST_C
 # Verbosity levels: 0=quiet, 1=normal, 2=verbose, 5=debug
 LOG_VERBOSITY ?= 0
 ifeq ($(CONFIGURATION),Debug)
-DEBUG := 1
-RELEASE := 0
+	DEBUG := 1
+	RELEASE := 0
 else
-DEBUG := 0
-RELEASE := 1
+	DEBUG := 0
+	RELEASE := 1
 endif
 
 BUILD_ENV := RELEASE=$(RELEASE) DEBUG=$(DEBUG) LOG_VERBOSITY=$(LOG_VERBOSITY)
 
-install:
+pnpm:
 	pnpm install
 
 all: prepare firefox chrome safari
 
 # PNPM build commands
-build-all:
+build-all: pnpm
 	$(BUILD_ENV) pnpm run build
 
-build-firefox-pnpm:
+build-firefox-pnpm: pnpm
 	$(BUILD_ENV) pnpm run build:firefox
 
-build-chrome-pnpm:
+build-chrome-pnpm: pnpm
 	$(BUILD_ENV) pnpm run build:chrome
 
-build-safari-pnpm:
+build-safari-pnpm: pnpm
 	$(BUILD_ENV) pnpm run build:safari
 
 # PNPM watch commands
-watch:
+watch: pnpm
 	$(BUILD_ENV) pnpm run watch
 
-watch-debug:
+watch-debug: pnpm
 	$(BUILD_ENV) pnpm run watch:debug
 
-watch-firefox:
+watch-firefox: pnpm
 	$(BUILD_ENV) pnpm run watch:firefox
 
-watch-chrome:
+watch-chrome: pnpm
 	$(BUILD_ENV) pnpm run watch:chrome
 
-watch-safari:
+watch-safari: pnpm
 	$(BUILD_ENV) pnpm run watch:safari
 
 XCODE_PROJECT := safari/ipvfoo-safari.xcodeproj
@@ -70,14 +70,10 @@ chrome: prepare build-chrome-pnpm
 	rm -f ${BUILDDIR}${NAME}-${VERSION_C}.zip
 	zip -9j ${BUILDDIR}${NAME}-${VERSION_C}.zip -j ${DISTDIR}/chrome/*
 
-safari: safari-build-resources
+safari: safari-ios safari-macos
 	@echo "Building Safari extension..."
 
-safari-build-resources:
-	@echo "Building extension resources for Xcode..."
-	${BUILD_ENV} pnpm run build:safari
-
-safari-add-xcode-targets: safari-build-resources
+safari-add-xcode-targets: build-safari-pnpm
 	@echo "Adding resources to Xcode project targets..."
 	@bash scripts/add-xcode-targets.sh
 
@@ -156,8 +152,9 @@ safari-clean:
 	rm -rf safari/Shared\ \(Extension\)/Resources/*.html
 	rm -rf safari/Shared\ \(Extension\)/Resources/manifest.json
 
-clean:
+clean: safari-clean
 	rm -rf ${BUILDDIR}
-	$(MAKE) safari-clean
+	rm -rf ${DISTDIR}
+	rm -rf node_modules
 
 .PHONY: install all prepare firefox chrome safari build-all build-firefox-pnpm build-chrome-pnpm build-safari-pnpm watch watch-debug watch-firefox watch-chrome watch-safari safari-build-resources safari-add-xcode-targets safari-ios safari-ios-debug safari-macos safari-macos-debug safari-run-ios safari-run-macos safari-archive-ios safari-archive-macos safari-clean clean
