@@ -4,7 +4,7 @@ import Network
 
 /// Resolves hostnames and orders candidate IP addresses using RFC 6724 while
 /// taking the host machine's network capabilities into account.
-enum DNSResolver {
+class DNSResolver {
     /// Attempt an actual TCP connection to confirm which address the system ultimately uses.
     static func verifyTcpConnection(
         domain: String,
