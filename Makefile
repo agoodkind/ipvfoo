@@ -1,14 +1,10 @@
 BUILDDIR := build/
 NAME := ipvfoo
-MANIFEST := src/manifest.json
+
 MANIFEST_F := manifest/firefox-manifest.json
 MANIFEST_C := manifest/chrome-manifest.json
-VERSION_F := $(shell cat ${MANIFEST_F} | \
-	sed -n 's/^ *"version": *"\([0-9.]\+\)".*/\1/p' | \
-	head -n1)
-VERSION_C := $(shell cat ${MANIFEST_C} | \
-	sed -n 's/^ *"version": *"\([0-9.]\+\)".*/\1/p' | \
-	head -n1)
+VERSION_F := $(shell sed -n 's/^ *"version": *"\([0-9.]*\)".*/\1/p' ${MANIFEST_F})
+VERSION_C := $(shell sed -n 's/^ *"version": *"\([0-9.]*\)".*/\1/p' ${MANIFEST_C})
 
 # Verbosity levels: 0=quiet, 1=normal, 2=verbose, 5=debug
 LOG_VERBOSITY ?= 0
@@ -63,19 +59,14 @@ XCODE_ENV := RELEASE=$(RELEASE) DEBUG=$(DEBUG) LOG_VERBOSITY=$(LOG_VERBOSITY) SK
 DERIVED_DATA := safari/build
 
 prepare:
-	@diff ${MANIFEST} ${MANIFEST_F} >/dev/null || \
-		diff ${MANIFEST} ${MANIFEST_C} >/dev/null || \
-		(echo "${MANIFEST} is not a copy of ${MANIFEST_F} or ${MANIFEST_C}; aborting."; exit 1)
 	mkdir -p build
 
-firefox: prepare
+firefox: prepare build-firefox-pnpm
 	rm -f ${BUILDDIR}${NAME}-${VERSION_F}.xpi
-	cp -f ${MANIFEST_F} ${MANIFEST}
 	zip -9j ${BUILDDIR}${NAME}-${VERSION_F}.xpi -j src/*
 
-chrome: prepare
+chrome: prepare build-chrome-pnpm
 	rm -f ${BUILDDIR}${NAME}-${VERSION_C}.zip
-	cp -f ${MANIFEST_C} ${MANIFEST}
 	zip -9j ${BUILDDIR}${NAME}-${VERSION_C}.zip -j src/*
 
 safari: safari-build-resources
