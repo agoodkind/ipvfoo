@@ -24,10 +24,10 @@ console.log("logVerbosity", logVerbosity)
 console.log("process.env.DEBUG", process.env.DEBUG)
 console.log("process.env.RELEASE", process.env.RELEASE)
 
-// is verbosity is 3, drop everything above it
-// is verbosity is 2, drop everything above it
-// is verbosity is 1, drop everything above it
-// is verbosity is 0, drop nothing
+// if verbosity is 3, drop everything above it
+// if verbosity is 2, drop everything above it
+// if verbosity is 1, drop everything above it
+// if verbosity is 0, drop nothing
 export const getLogLevelsToDrop = (maxVerbosity = 5) => {
   return Array.from({ length: maxVerbosity }, (_, i) => i + 1)
     .filter(level => logVerbosity < level)
